@@ -1,0 +1,297 @@
+<?php
+
+namespace App\Http\Controllers\Api\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
+
+class AuthController extends Controller
+{
+    public function loginAdmin(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'mobile' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = User::where('mobile', $request->mobile)
+                   ->where('role', 'admin')
+                   ->where('is_blocked', false)
+                   ->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials'
+            ], 401);
+        }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        // Clean user data
+        $userData = $user->toArray();
+        unset($userData['email_verified_at'], $userData['deleted_at'], $userData['referral_code']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Admin login successful',
+            'data' => [
+                'user' => $userData,
+                'token' => $token,
+                'token_type' => 'Bearer'
+            ]
+        ]);
+    }
+
+    public function loginLeader(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'mobile' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = User::where('mobile', $request->mobile)
+                   ->where('role', 'leader')
+                   ->where('is_blocked', false)
+                   ->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials'
+            ], 401);
+        }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        // Load wallet and clean user data
+        $user->load('wallet');
+        $userData = $user->toArray();
+        $userData['wallet_balance'] = $user->wallet ? $user->wallet->balance : '0.00';
+        unset($userData['wallet'], $userData['email_verified_at'], $userData['deleted_at']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Login successful',
+            'data' => [
+                'user' => $userData,
+                'token' => $token,
+                'token_type' => 'Bearer'
+            ]
+        ]);
+    }
+
+    public function loginAgent(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'mobile' => 'required|string',
+            'password' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = User::where('mobile', $request->mobile)
+                   ->where('role', 'agent')
+                   ->where('is_blocked', false)
+                   ->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid credentials'
+            ], 401);
+        }
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        // Load wallet and clean user data
+        $user->load('wallet');
+        $userData = $user->toArray();
+        $userData['wallet_balance'] = $user->wallet ? $user->wallet->balance : '0.00';
+        unset($userData['wallet'], $userData['email_verified_at'], $userData['deleted_at']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Login successful',
+            'data' => [
+                'user' => $userData,
+                'token' => $token,
+                'token_type' => 'Bearer'
+            ]
+        ]);
+    }
+
+    public function registerLeader(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'mobile' => 'required|string|unique:users,mobile',
+            'email' => 'nullable|email|unique:users,email',
+            'password' => 'required|string|min:8',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Check if the authenticated user is an admin
+        if (auth()->user()->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only admins can register leaders'
+            ], 403);
+        }
+
+        // Generate unique_id for leader
+        $lastUser = User::orderBy('id', 'desc')->first();
+        $nextNumber = $lastUser ? (intval(substr($lastUser->unique_id, 3)) + 1) : 1;
+        $unique_id = 'AXN' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
+        $user = User::create([
+            'unique_id' => $unique_id,
+            'name' => $request->name,
+            'mobile' => $request->mobile,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => 'leader',
+            'is_blocked' => false,
+        ]);
+
+        // Load wallet and format response
+        $user->load('wallet');
+        $userData = $user->toArray();
+        $userData['wallet_balance'] = $user->wallet ? $user->wallet->balance : '0.00';
+        unset($userData['wallet'], $userData['email_verified_at'], $userData['deleted_at']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Leader registered successfully',
+            'data' => $userData
+        ], 201);
+    }
+
+    public function registerAgent(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'mobile' => 'required|string|unique:users,mobile',
+            'email' => 'nullable|email|unique:users,email',
+            'password' => 'required|string|min:8',
+            'referral_code' => 'nullable|string'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Check if the authenticated user is a leader
+        if (auth()->user()->role !== 'leader') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only leaders can register agents'
+            ], 403);
+        }
+
+        // Generate unique_id
+        $lastUser = User::orderBy('id', 'desc')->first();
+        $nextNumber = $lastUser ? (intval(substr($lastUser->unique_id, 3)) + 1) : 1;
+        $unique_id = 'AXN' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
+
+        $user = User::create([
+            'unique_id' => $unique_id,
+            'name' => $request->name,
+            'mobile' => $request->mobile,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => 'agent',
+            'referral_code' => $request->referral_code,
+            'is_blocked' => false,
+        ]);
+
+        // Load wallet and format response
+        $user->load('wallet');
+        $userData = $user->toArray();
+        $userData['wallet_balance'] = $user->wallet ? $user->wallet->balance : '0.00';
+        unset($userData['wallet'], $userData['email_verified_at'], $userData['deleted_at']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Agent registered successfully',
+            'data' => $userData
+        ], 201);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->user()->tokens()->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Logged out successfully'
+        ]);
+    }
+
+    public function profile(Request $request)
+    {
+        $user = $request->user();
+        
+        // Load relationships based on role
+        if (in_array($user->role, ['agent', 'leader'])) {
+            $user->load(['profile', 'wallet']);
+            
+            // Merge wallet balance into user object and remove wallet object
+            $userData = $user->toArray();
+            $userData['wallet_balance'] = $user->wallet ? $user->wallet->balance : '0.00';
+            unset($userData['wallet']);
+            
+            // Remove unnecessary keys
+            unset($userData['email_verified_at'], $userData['deleted_at']);
+            
+        } else {
+            $user->load(['profile']);
+            $userData = $user->toArray();
+            
+            // Remove unnecessary keys for admin
+            unset($userData['email_verified_at'], $userData['deleted_at'], $userData['referral_code']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $userData
+        ]);
+    }
+}

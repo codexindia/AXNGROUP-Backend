@@ -1,0 +1,906 @@
+{
+	"info": {
+		"_postman_id": "axn-group-api-collection",
+		"name": "AXN Group API Collection - Updated",
+		"description": "Complete API collection for Agent-Leader-Admin system with role-based access control and clean response structures. Admin creates leaders, leaders create agents, agents onboard shops.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{auth_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api",
+			"type": "string"
+		},
+		{
+			"key": "auth_token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Admin Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"mobile\": \"9999999999\",\n    \"password\": \"password\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login/admin",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login", "admin"]
+						}
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"mobile\": \"9999999999\",\n    \"password\": \"password\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/auth/login/admin",
+									"host": ["{{base_url}}"],
+									"path": ["auth", "login", "admin"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Admin login successful\",\n    \"data\": {\n        \"user\": {\n            \"id\": 1,\n            \"unique_id\": \"AXN00001\",\n            \"name\": \"Admin User\",\n            \"mobile\": \"9999999999\",\n            \"email\": null,\n            \"role\": \"admin\",\n            \"is_blocked\": false,\n            \"created_at\": \"2025-01-01T00:00:00.000000Z\",\n            \"updated_at\": \"2025-01-01T00:00:00.000000Z\"\n        },\n        \"token\": \"1|abcdefg123456789\",\n        \"token_type\": \"Bearer\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Leader Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"mobile\": \"8888888888\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login/leader",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login", "leader"]
+						}
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"mobile\": \"8888888888\",\n    \"password\": \"password123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/auth/login/leader",
+									"host": ["{{base_url}}"],
+									"path": ["auth", "login", "leader"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Login successful\",\n    \"data\": {\n        \"user\": {\n            \"id\": 2,\n            \"unique_id\": \"AXN00002\",\n            \"name\": \"Team Leader\",\n            \"mobile\": \"8888888888\",\n            \"email\": \"leader@example.com\",\n            \"role\": \"leader\",\n            \"referral_code\": null,\n            \"is_blocked\": false,\n            \"wallet_balance\": \"0.00\",\n            \"created_at\": \"2025-01-01T00:00:00.000000Z\",\n            \"updated_at\": \"2025-01-01T00:00:00.000000Z\"\n        },\n        \"token\": \"2|xyz789def456\",\n        \"token_type\": \"Bearer\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Agent Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"mobile\": \"7777777777\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login/agent",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login", "agent"]
+						}
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"mobile\": \"7777777777\",\n    \"password\": \"password123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/auth/login/agent",
+									"host": ["{{base_url}}"],
+									"path": ["auth", "login", "agent"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Login successful\",\n    \"data\": {\n        \"user\": {\n            \"id\": 3,\n            \"unique_id\": \"AXN00003\",\n            \"name\": \"Sales Agent\",\n            \"mobile\": \"7777777777\",\n            \"email\": \"agent@example.com\",\n            \"role\": \"agent\",\n            \"referral_code\": \"REF001\",\n            \"is_blocked\": false,\n            \"wallet_balance\": \"0.00\",\n            \"created_at\": \"2025-01-01T00:00:00.000000Z\",\n            \"updated_at\": \"2025-01-01T00:00:00.000000Z\"\n        },\n        \"token\": \"3|qwe456rty789\",\n        \"token_type\": \"Bearer\"\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Register Leader (Admin Only)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Team Leader\",\n    \"mobile\": \"8888888888\",\n    \"email\": \"leader@axngroup.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register/leader",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "register", "leader"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register Agent (Leader Only)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Sales Agent\",\n    \"mobile\": \"7777777777\",\n    \"email\": \"agent@axngroup.com\",\n    \"password\": \"password123\",\n    \"referral_code\": \"REF001\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register/agent",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "register", "agent"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/profile",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "profile"]
+						}
+					},
+					"response": [
+						{
+							"name": "Agent/Leader Profile Response",
+							"originalRequest": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{auth_token}}", "type": "string"}]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/auth/profile",
+									"host": ["{{base_url}}"],
+									"path": ["auth", "profile"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 2,\n        \"unique_id\": \"AXN00002\",\n        \"name\": \"Sudipto\",\n        \"mobile\": \"8509435513\",\n        \"email\": null,\n        \"role\": \"agent\",\n        \"referral_code\": null,\n        \"is_blocked\": false,\n        \"wallet_balance\": \"0.00\",\n        \"created_at\": \"2025-08-16T20:26:41.000000Z\",\n        \"updated_at\": \"2025-08-16T20:26:41.000000Z\",\n        \"profile\": null\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/logout",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "logout"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Wallet",
+			"item": [
+				{
+					"name": "Get Balance",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/wallet/balance",
+							"host": ["{{base_url}}"],
+							"path": ["wallet", "balance"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Transactions",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/wallet/transactions",
+							"host": ["{{base_url}}"],
+							"path": ["wallet", "transactions"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Request Withdrawal (Agent/Leader)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"amount\": 1000.50\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/wallet/withdraw",
+							"host": ["{{base_url}}"],
+							"path": ["wallet", "withdraw"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Withdrawals",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/wallet/withdrawals",
+							"host": ["{{base_url}}"],
+							"path": ["wallet", "withdrawals"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Credit Wallet (Leader/Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_id\": 3,\n    \"amount\": 500.00,\n    \"reference_type\": \"bank_transfer\",\n    \"reference_id\": 1,\n    \"remark\": \"Commission credit\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/wallet/credit",
+							"host": ["{{base_url}}"],
+							"path": ["wallet", "credit"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Shop",
+			"item": [
+				{
+					"name": "Create Shop (Agent Only)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"customer_name\": \"Shop Owner\",\n    \"customer_mobile\": \"9876543210\",\n    \"team_leader_id\": 2\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/shops",
+							"host": ["{{base_url}}"],
+							"path": ["shops"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Agent's Shops",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/shops/agent",
+							"host": ["{{base_url}}"],
+							"path": ["shops", "agent"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Leader's Shops",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/shops/leader",
+							"host": ["{{base_url}}"],
+							"path": ["shops", "leader"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Shop Status (Leader Only)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"approved\",\n    \"reject_remark\": \"Incomplete documentation\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/shops/1/status",
+							"host": ["{{base_url}}"],
+							"path": ["shops", "1", "status"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Shop Details",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/shops/1",
+							"host": ["{{base_url}}"],
+							"path": ["shops", "1"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Bank Transfer",
+			"item": [
+				{
+					"name": "Create Bank Transfer (Agent Only)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"customer_name\": \"Customer Name\",\n    \"customer_mobile\": \"9876543210\",\n    \"amount\": 5000.00,\n    \"team_leader_id\": 2\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/bank-transfers",
+							"host": ["{{base_url}}"],
+							"path": ["bank-transfers"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Agent's Bank Transfers",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/bank-transfers/agent",
+							"host": ["{{base_url}}"],
+							"path": ["bank-transfers", "agent"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Leader's Bank Transfers",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/bank-transfers/leader",
+							"host": ["{{base_url}}"],
+							"path": ["bank-transfers", "leader"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Bank Transfer Status (Leader Only)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"approved\",\n    \"amount_change_remark\": \"Amount adjusted\",\n    \"reject_remark\": \"Reason for rejection\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/bank-transfers/1/status",
+							"host": ["{{base_url}}"],
+							"path": ["bank-transfers", "1", "status"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Bank Transfer Details",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/bank-transfers/1",
+							"host": ["{{base_url}}"],
+							"path": ["bank-transfers", "1"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Profile",
+			"item": [
+				{
+					"name": "Get Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/profile",
+							"host": ["{{base_url}}"],
+							"path": ["profile"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "aadhar_number",
+									"value": "123456789012",
+									"type": "text"
+								},
+								{
+									"key": "pan_number",
+									"value": "ABCDE1234F",
+									"type": "text"
+								},
+								{
+									"key": "address",
+									"value": "Complete address",
+									"type": "text"
+								},
+								{
+									"key": "dob",
+									"value": "1990-01-01",
+									"type": "text"
+								},
+								{
+									"key": "agent_photo",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/profile/update",
+							"host": ["{{base_url}}"],
+							"path": ["profile", "update"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Bank Details",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"account_holder_name\": \"Account Holder\",\n    \"bank_name\": \"Bank Name\",\n    \"account_number\": \"1234567890\",\n    \"confirm_account_number\": \"1234567890\",\n    \"ifsc_code\": \"BANK0001234\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/profile/bank-details",
+							"host": ["{{base_url}}"],
+							"path": ["profile", "bank-details"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Bank Details",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/profile/bank-details",
+							"host": ["{{base_url}}"],
+							"path": ["profile", "bank-details"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Bank Details",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"account_holder_name\": \"Updated Holder\",\n    \"bank_name\": \"Updated Bank\",\n    \"account_number\": \"9876543210\",\n    \"confirm_account_number\": \"9876543210\",\n    \"ifsc_code\": \"BANK0009876\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/profile/bank-details/1",
+							"host": ["{{base_url}}"],
+							"path": ["profile", "bank-details", "1"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Bank Details",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/profile/bank-details/1",
+							"host": ["{{base_url}}"],
+							"path": ["profile", "bank-details", "1"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
