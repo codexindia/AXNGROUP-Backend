@@ -254,7 +254,7 @@ class ShopController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'status' => 'nullable|in:pending,completed,failed',
+            'status' => 'nullable|in:pending,approved,rejected,admin_approved,admin_rejected',
             'date_from' => 'nullable|date',
             'date_to' => 'nullable|date|after_or_equal:date_from',
             'min_amount' => 'nullable|numeric|min:0',
@@ -271,53 +271,51 @@ class ShopController extends Controller
             ], 422);
         }
 
-        // Assuming we have a bank_transfers table related to shops
-        $query = Shop::with(['agent', 'teamLeader'])
-                    ->where('status', 'approved')
-                    ->whereNotNull('bank_transfer_amount');
+        // Use BankTransfer model instead of Shop
+        $query = \App\Models\BankTransfer::with(['agent', 'teamLeader']);
 
         // Apply filters
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
         if ($request->filled('date_from')) {
-            $query->whereDate('bank_transfer_date', '>=', $request->date_from);
+            $query->whereDate('created_at', '>=', $request->date_from);
         }
 
         if ($request->filled('date_to')) {
-            $query->whereDate('bank_transfer_date', '<=', $request->date_to);
+            $query->whereDate('created_at', '<=', $request->date_to);
         }
 
         if ($request->filled('min_amount')) {
-            $query->where('bank_transfer_amount', '>=', $request->min_amount);
+            $query->where('amount', '>=', $request->min_amount);
         }
 
         if ($request->filled('max_amount')) {
-            $query->where('bank_transfer_amount', '<=', $request->max_amount);
+            $query->where('amount', '<=', $request->max_amount);
         }
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('customer_name', 'like', "%{$search}%")
-                  ->orWhere('customer_mobile', 'like', "%{$search}%")
-                  ->orWhere('bank_reference_number', 'like', "%{$search}%");
+                  ->orWhere('customer_mobile', 'like', "%{$search}%");
             });
         }
 
         $perPage = $request->get('per_page', 20);
-        $transfers = $query->orderBy('bank_transfer_date', 'desc')->paginate($perPage);
+        $transfers = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         // Calculate transfer statistics
         $stats = [
-            'total_transfers' => Shop::where('status', 'approved')->whereNotNull('bank_transfer_amount')->count(),
-            'total_amount' => Shop::where('status', 'approved')->sum('bank_transfer_amount') ?? 0,
-            'today_transfers' => Shop::where('status', 'approved')
-                                   ->whereDate('bank_transfer_date', Carbon::today())
-                                   ->count(),
-            'today_amount' => Shop::where('status', 'approved')
-                                 ->whereDate('bank_transfer_date', Carbon::today())
-                                 ->sum('bank_transfer_amount') ?? 0,
-            'this_month_amount' => Shop::where('status', 'approved')
-                                      ->whereMonth('bank_transfer_date', Carbon::now()->month)
-                                      ->sum('bank_transfer_amount') ?? 0
+            'total_transfers' => \App\Models\BankTransfer::count(),
+            'total_amount' => \App\Models\BankTransfer::sum('amount') ?? 0,
+            'pending_transfers' => \App\Models\BankTransfer::where('status', 'pending')->count(),
+            'approved_transfers' => \App\Models\BankTransfer::where('status', 'approved')->count(),
+            'admin_approved_transfers' => \App\Models\BankTransfer::where('status', 'admin_approved')->count(),
+            'today_transfers' => \App\Models\BankTransfer::whereDate('created_at', Carbon::today())->count(),
+            'today_amount' => \App\Models\BankTransfer::whereDate('created_at', Carbon::today())->sum('amount') ?? 0,
+            'this_month_amount' => \App\Models\BankTransfer::whereMonth('created_at', Carbon::now()->month)->sum('amount') ?? 0
         ];
 
         return response()->json([
@@ -370,11 +368,8 @@ class ShopController extends Controller
                 'onboarding_rejected' => Shop::whereDate('updated_at', $currentDate)
                                             ->where('status', 'rejected')
                                             ->count(),
-                'bank_transfers' => Shop::whereDate('bank_transfer_date', $currentDate)
-                                       ->whereNotNull('bank_transfer_amount')
-                                       ->count(),
-                'transfer_amount' => Shop::whereDate('bank_transfer_date', $currentDate)
-                                        ->sum('bank_transfer_amount') ?? 0
+                'bank_transfers' => \App\Models\BankTransfer::whereDate('created_at', $currentDate)->count(),
+                'transfer_amount' => \App\Models\BankTransfer::whereDate('created_at', $currentDate)->sum('amount') ?? 0
             ];
 
             $dailyStats[] = $dayStats;

@@ -19,6 +19,7 @@ class CheckRole
      */
     public function handle(Request $request, Closure $next, ...$roles)
     {
+        $request->headers->set('Accept', 'application/json');
         if (!auth()->check()) {
             return response()->json([
                 'success' => false,
