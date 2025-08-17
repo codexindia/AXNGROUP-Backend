@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Services\PayoutService;
 
 class ShopController extends Controller
 {
@@ -435,6 +436,90 @@ class ShopController extends Controller
                     'leaders' => $topLeaders
                 ]
             ]
+        ]);
+    }
+
+    /**
+     * Admin final approval for onboarding (triggers payout)
+     */
+    public function adminApproval(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:admin_approved,admin_rejected',
+            'admin_remark' => 'nullable|string'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Only admin can do final approval
+        if ($request->user()->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only admin can do final approval'
+            ], 403);
+        }
+
+        $shop = Shop::find($id);
+
+        if (!$shop) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Shop not found'
+            ], 404);
+        }
+
+        // Shop must be approved by leader first
+        if ($shop->status !== 'approved') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Shop must be approved by team leader first'
+            ], 400);
+        }
+
+        $shop->update([
+            'status' => $request->status
+        ]);
+
+        // If admin approved, calculate and credit payout
+        if ($request->status === 'admin_approved') {
+            $payoutAmount = PayoutService::calculateOnboardingPayout($shop->agent_id);
+            
+            if ($payoutAmount > 0) {
+                PayoutService::creditPayout(
+                    $shop->agent_id, 
+                    $payoutAmount, 
+                    'onboarding_payout', 
+                    $shop->id
+                );
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Shop admin approval updated successfully',
+            'data' => $shop->load(['agent', 'teamLeader'])
+        ]);
+    }
+
+    /**
+     * Get pending shops for admin approval
+     */
+    public function getPendingForAdmin()
+    {
+        $shops = Shop::where('status', 'approved') // Leader approved, waiting for admin
+                     ->with(['agent', 'teamLeader'])
+                     ->orderBy('updated_at', 'asc')
+                     ->paginate(20);
+
+        return response()->json([
+            'success' => true,
+            'data' => $shops
         ]);
     }
 }

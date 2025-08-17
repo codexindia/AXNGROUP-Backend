@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BankTransfer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Services\PayoutService;
 
 class BankTransferController extends Controller
 {
@@ -162,21 +163,102 @@ class BankTransferController extends Controller
 
     private function creditAgentWallet($bankTransfer)
     {
-        $agent = $bankTransfer->agent;
-        $wallet = $agent->wallet;
+        // This method is now handled by PayoutService in adminApproval
+        // Keeping for backward compatibility but logic moved to admin approval
+    }
 
-        if ($wallet) {
-            $wallet->increment('balance', $bankTransfer->amount);
-            
-            // Record transaction
-            \App\Models\WalletTransaction::create([
-                'wallet_id' => $wallet->id,
-                'type' => 'credit',
-                'amount' => $bankTransfer->amount,
-                'reference_type' => 'bank_transfer',
-                'reference_id' => $bankTransfer->id,
-                'remark' => 'Commission from bank transfer'
-            ]);
+    /**
+     * Admin final approval for bank transfer (triggers payout)
+     */
+    public function adminApproval(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'status' => 'required|in:admin_approved,admin_rejected',
+            'admin_remark' => 'nullable|string'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
         }
+
+        // Only admin can do final approval
+        if ($request->user()->role !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only admin can do final approval'
+            ], 403);
+        }
+
+        $bankTransfer = BankTransfer::find($id);
+
+        if (!$bankTransfer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bank transfer not found'
+            ], 404);
+        }
+
+        // Bank transfer must be approved by leader first
+        if ($bankTransfer->status !== 'approved') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bank transfer must be approved by team leader first'
+            ], 400);
+        }
+
+        $bankTransfer->update([
+            'status' => $request->status
+        ]);
+
+        // If admin approved, calculate and credit payout
+        if ($request->status === 'admin_approved') {
+            // Check if transfer is eligible for payout
+            if (PayoutService::isBankTransferEligible($bankTransfer->amount)) {
+                // Get agent's total bank transfer amount for current month
+                $totalAmount = PayoutService::getAgentBankTransferTotal($bankTransfer->agent_id);
+                
+                // Calculate payout based on total monthly amount
+                $payoutAmount = PayoutService::calculateBankTransferPayout($totalAmount);
+                
+                if ($payoutAmount > 0) {
+                    PayoutService::creditPayout(
+                        $bankTransfer->agent_id, 
+                        $payoutAmount, 
+                        'bank_transfer_payout', 
+                        $bankTransfer->id
+                    );
+                }
+            } else {
+                // For transfers below ₹50,000, just note the fee deduction
+                $feeDeduction = PayoutService::calculateFeeDeduction($bankTransfer->amount);
+                // Fee deduction logic can be handled in reporting, not stored in DB
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Bank transfer admin approval updated successfully',
+            'data' => $bankTransfer->load(['agent', 'teamLeader'])
+        ]);
+    }
+
+    /**
+     * Get pending bank transfers for admin approval
+     */
+    public function getPendingForAdmin()
+    {
+        $bankTransfers = BankTransfer::where('status', 'approved') // Leader approved, waiting for admin
+                                   ->with(['agent', 'teamLeader'])
+                                   ->orderBy('updated_at', 'asc')
+                                   ->paginate(20);
+
+        return response()->json([
+            'success' => true,
+            'data' => $bankTransfers
+        ]);
     }
 }

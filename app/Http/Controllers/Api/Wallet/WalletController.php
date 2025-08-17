@@ -8,6 +8,7 @@ use App\Models\Withdrawal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use App\Services\PayoutService;
 
 class WalletController extends Controller
 {
@@ -201,5 +202,42 @@ class WalletController extends Controller
                 'message' => 'Failed to credit wallet'
             ], 500);
         }
+    }
+
+    /**
+     * Get agent's payout history from wallet transactions
+     */
+    public function getPayoutHistory(Request $request)
+    {
+        if ($request->user()->role !== 'agent') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only agents can view payout history'
+            ], 403);
+        }
+
+        $type = $request->query('type'); // onboarding_payout or bank_transfer_payout
+        $payoutHistory = PayoutService::getAgentPayoutHistory($request->user()->id, $type);
+
+        // Group by month for better organization
+        $groupedPayouts = $payoutHistory->groupBy(function ($transaction) {
+            return $transaction->created_at->format('Y-m');
+        });
+
+        $summary = [
+            'total_onboarding_payout' => $payoutHistory->where('reference_type', 'onboarding_payout')->sum('amount'),
+            'total_bank_transfer_payout' => $payoutHistory->where('reference_type', 'bank_transfer_payout')->sum('amount'),
+            'total_payout' => $payoutHistory->sum('amount'),
+            'this_month_payout' => $payoutHistory->where('created_at', '>=', now()->startOfMonth())->sum('amount')
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'summary' => $summary,
+                'transactions' => $payoutHistory->take(50), // Latest 50 transactions
+                'grouped_by_month' => $groupedPayouts->take(12) // Last 12 months
+            ]
+        ]);
     }
 }

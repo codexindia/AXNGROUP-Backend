@@ -25,6 +25,36 @@
 			"key": "auth_token",
 			"value": "",
 			"type": "string"
+		},
+		{
+			"key": "admin_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "leader_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "agent_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "shop_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "bank_transfer_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
 		}
 	],
 	"item": [
@@ -33,6 +63,25 @@
 			"item": [
 				{
 					"name": "Admin Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.success && responseJson.data.token) {",
+									"        pm.collectionVariables.set('admin_token', responseJson.data.token);",
+									"        pm.collectionVariables.set('auth_token', responseJson.data.token);",
+									"        pm.collectionVariables.set('user_id', responseJson.data.user.id);",
+									"        console.log('Admin token saved:', responseJson.data.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -77,6 +126,25 @@
 				},
 				{
 					"name": "Leader Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.success && responseJson.data.token) {",
+									"        pm.collectionVariables.set('leader_token', responseJson.data.token);",
+									"        pm.collectionVariables.set('auth_token', responseJson.data.token);",
+									"        pm.collectionVariables.set('user_id', responseJson.data.user.id);",
+									"        console.log('Leader token saved:', responseJson.data.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -121,6 +189,25 @@
 				},
 				{
 					"name": "Agent Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.success && responseJson.data.token) {",
+									"        pm.collectionVariables.set('agent_token', responseJson.data.token);",
+									"        pm.collectionVariables.set('auth_token', responseJson.data.token);",
+									"        pm.collectionVariables.set('user_id', responseJson.data.user.id);",
+									"        console.log('Agent token saved:', responseJson.data.token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"method": "POST",
 						"header": [
@@ -432,6 +519,58 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Get Payout History (Agent)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{agent_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/wallet/payouts?type=onboarding_payout",
+							"host": ["{{base_url}}"],
+							"path": ["wallet", "payouts"],
+							"query": [
+								{
+									"key": "type",
+									"value": "onboarding_payout",
+									"description": "Filter by payout type: onboarding_payout or bank_transfer_payout"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "Payout History Response",
+							"originalRequest": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{agent_token}}", "type": "string"}]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/wallet/payouts",
+									"host": ["{{base_url}}"],
+									"path": ["wallet", "payouts"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"data\": {\n        \"summary\": {\n            \"total_onboarding_payout\": 440,\n            \"total_bank_transfer_payout\": 330,\n            \"total_payout\": 770,\n            \"this_month_payout\": 200\n        },\n        \"transactions\": [\n            {\n                \"id\": 1,\n                \"wallet_id\": 1,\n                \"type\": \"credit\",\n                \"amount\": \"240.00\",\n                \"reference_type\": \"onboarding_payout\",\n                \"reference_id\": 5,\n                \"remark\": \"Onboarding payout commission - ₹240\",\n                \"created_at\": \"2025-08-17T10:30:00.000000Z\"\n            }\n        ],\n        \"grouped_by_month\": {\n            \"2025-08\": [\n                {\n                    \"amount\": \"240.00\",\n                    \"reference_type\": \"onboarding_payout\",\n                    \"created_at\": \"2025-08-17T10:30:00.000000Z\"\n                }\n            ]\n        }\n    }\n}"
+						}
+					]
 				}
 			]
 		},
@@ -440,13 +579,30 @@
 			"item": [
 				{
 					"name": "Create Shop (Agent Only)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.success && responseJson.data.id) {",
+									"        pm.collectionVariables.set('shop_id', responseJson.data.id);",
+									"        console.log('Shop ID saved:', responseJson.data.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"auth": {
 							"type": "bearer",
 							"bearer": [
 								{
 									"key": "token",
-									"value": "{{auth_token}}",
+									"value": "{{agent_token}}",
 									"type": "string"
 								}
 							]
@@ -460,7 +616,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"customer_name\": \"Shop Owner\",\n    \"customer_mobile\": \"9876543210\",\n    \"team_leader_id\": 2\n}"
+							"raw": "{\n    \"customer_name\": \"Shop Owner\",\n    \"customer_mobile\": \"9876543210\",\n    \"team_leader_id\": \"{{user_id}}\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/shops",
@@ -524,7 +680,7 @@
 							"bearer": [
 								{
 									"key": "token",
-									"value": "{{auth_token}}",
+									"value": "{{leader_token}}",
 									"type": "string"
 								}
 							]
@@ -538,12 +694,12 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"status\": \"approved\",\n    \"reject_remark\": \"Incomplete documentation\"\n}"
+							"raw": "{\n    \"status\": \"approved\",\n    \"reject_remark\": \"Ready for admin approval\"\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/shops/1/status",
+							"raw": "{{base_url}}/shops/{{shop_id}}/status",
 							"host": ["{{base_url}}"],
-							"path": ["shops", "1", "status"]
+							"path": ["shops", "{{shop_id}}", "status"]
 						}
 					},
 					"response": []
@@ -564,12 +720,110 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/shops/1",
+							"raw": "{{base_url}}/shops/{{shop_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["shops", "1"]
+							"path": ["shops", "{{shop_id}}"]
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Get Pending Shops for Admin",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/shops/admin/pending",
+							"host": ["{{base_url}}"],
+							"path": ["shops", "admin", "pending"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Admin Approval for Shop",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.success && responseJson.data.id) {",
+									"        pm.collectionVariables.set('shop_id', responseJson.data.id);",
+									"        console.log('Shop ID saved:', responseJson.data.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"admin_approved\",\n    \"admin_remark\": \"Approved for payout calculation\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/shops/admin/{{shop_id}}/approval",
+							"host": ["{{base_url}}"],
+							"path": ["shops", "admin", "{{shop_id}}", "approval"]
+						}
+					},
+					"response": [
+						{
+							"name": "Admin Approval Success Response",
+							"originalRequest": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "PUT",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"admin_approved\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/shops/admin/1/approval",
+									"host": ["{{base_url}}"],
+									"path": ["shops", "admin", "1", "approval"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Shop admin approval updated successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"agent_id\": 3,\n        \"team_leader_id\": 2,\n        \"customer_name\": \"Shop Owner\",\n        \"customer_mobile\": \"9876543210\",\n        \"status\": \"admin_approved\",\n        \"reject_remark\": null,\n        \"created_at\": \"2025-08-17T10:00:00.000000Z\",\n        \"updated_at\": \"2025-08-17T10:30:00.000000Z\",\n        \"agent\": {\n            \"id\": 3,\n            \"name\": \"Sales Agent\",\n            \"mobile\": \"7777777777\"\n        },\n        \"team_leader\": {\n            \"id\": 2,\n            \"name\": \"Team Leader\",\n            \"mobile\": \"8888888888\"\n        }\n    }\n}"
+						}
+					]
 				}
 			]
 		},
@@ -578,13 +832,30 @@
 			"item": [
 				{
 					"name": "Create Bank Transfer (Agent Only)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.success && responseJson.data.id) {",
+									"        pm.collectionVariables.set('bank_transfer_id', responseJson.data.id);",
+									"        console.log('Bank Transfer ID saved:', responseJson.data.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"request": {
 						"auth": {
 							"type": "bearer",
 							"bearer": [
 								{
 									"key": "token",
-									"value": "{{auth_token}}",
+									"value": "{{agent_token}}",
 									"type": "string"
 								}
 							]
@@ -598,7 +869,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"customer_name\": \"Customer Name\",\n    \"customer_mobile\": \"9876543210\",\n    \"amount\": 5000.00,\n    \"team_leader_id\": 2\n}"
+							"raw": "{\n    \"customer_name\": \"Customer Name\",\n    \"customer_mobile\": \"9876543210\",\n    \"amount\": 150000.00,\n    \"team_leader_id\": \"{{user_id}}\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/bank-transfers",
@@ -662,7 +933,7 @@
 							"bearer": [
 								{
 									"key": "token",
-									"value": "{{auth_token}}",
+									"value": "{{leader_token}}",
 									"type": "string"
 								}
 							]
@@ -676,12 +947,12 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"status\": \"approved\",\n    \"amount_change_remark\": \"Amount adjusted\",\n    \"reject_remark\": \"Reason for rejection\"\n}"
+							"raw": "{\n    \"status\": \"approved\",\n    \"amount_change_remark\": \"Amount verified\",\n    \"reject_remark\": null\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/bank-transfers/1/status",
+							"raw": "{{base_url}}/bank-transfers/{{bank_transfer_id}}/status",
 							"host": ["{{base_url}}"],
-							"path": ["bank-transfers", "1", "status"]
+							"path": ["bank-transfers", "{{bank_transfer_id}}", "status"]
 						}
 					},
 					"response": []
@@ -702,12 +973,110 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/bank-transfers/1",
+							"raw": "{{base_url}}/bank-transfers/{{bank_transfer_id}}",
 							"host": ["{{base_url}}"],
-							"path": ["bank-transfers", "1"]
+							"path": ["bank-transfers", "{{bank_transfer_id}}"]
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "Get Pending Bank Transfers for Admin",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/bank-transfers/admin/pending",
+							"host": ["{{base_url}}"],
+							"path": ["bank-transfers", "admin", "pending"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Admin Approval for Bank Transfer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.success && responseJson.data.id) {",
+									"        pm.collectionVariables.set('bank_transfer_id', responseJson.data.id);",
+									"        console.log('Bank Transfer ID saved:', responseJson.data.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"admin_approved\",\n    \"admin_remark\": \"Approved for payout calculation\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/bank-transfers/admin/{{bank_transfer_id}}/approval",
+							"host": ["{{base_url}}"],
+							"path": ["bank-transfers", "admin", "{{bank_transfer_id}}", "approval"]
+						}
+					},
+					"response": [
+						{
+							"name": "Admin Approval Success Response",
+							"originalRequest": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "PUT",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"admin_approved\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/bank-transfers/admin/1/approval",
+									"host": ["{{base_url}}"],
+									"path": ["bank-transfers", "admin", "1", "approval"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Bank transfer admin approval updated successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"agent_id\": 3,\n        \"team_leader_id\": 2,\n        \"customer_name\": \"Customer Name\",\n        \"customer_mobile\": \"9876543210\",\n        \"amount\": \"150000.00\",\n        \"status\": \"admin_approved\",\n        \"amount_change_remark\": null,\n        \"reject_remark\": null,\n        \"created_at\": \"2025-08-17T10:00:00.000000Z\",\n        \"updated_at\": \"2025-08-17T10:30:00.000000Z\",\n        \"agent\": {\n            \"id\": 3,\n            \"name\": \"Sales Agent\",\n            \"mobile\": \"7777777777\"\n        },\n        \"team_leader\": {\n            \"id\": 2,\n            \"name\": \"Team Leader\",\n            \"mobile\": \"8888888888\"\n        }\n    }\n}"
+						}
+					]
 				}
 			]
 		},
@@ -899,6 +1268,363 @@
 						}
 					},
 					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin Dashboard",
+			"item": [
+				{
+					"name": "Switch to Admin Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.collectionVariables.set('auth_token', pm.collectionVariables.get('admin_token'));",
+									"console.log('Switched to Admin token');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/profile",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "profile"]
+						}
+					}
+				},
+				{
+					"name": "Switch to Leader Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.collectionVariables.set('auth_token', pm.collectionVariables.get('leader_token'));",
+									"console.log('Switched to Leader token');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/profile",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "profile"]
+						}
+					}
+				},
+				{
+					"name": "Switch to Agent Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.collectionVariables.set('auth_token', pm.collectionVariables.get('agent_token'));",
+									"console.log('Switched to Agent token');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/auth/profile",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "profile"]
+						}
+					}
+				},
+				{
+					"name": "Get Admin Dashboard Overview",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/shops/admin/daily-reports?days=7",
+							"host": ["{{base_url}}"],
+							"path": ["shops", "admin", "daily-reports"],
+							"query": [
+								{
+									"key": "days",
+									"value": "7"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Workflow Testing",
+			"item": [
+				{
+					"name": "Complete Agent-Leader-Admin Workflow",
+					"item": [
+						{
+							"name": "1. Agent Login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const responseJson = pm.response.json();",
+											"    if (responseJson.success && responseJson.data.token) {",
+											"        pm.collectionVariables.set('agent_token', responseJson.data.token);",
+											"        pm.collectionVariables.set('auth_token', responseJson.data.token);",
+											"        pm.collectionVariables.set('user_id', responseJson.data.user.id);",
+											"        console.log('✅ Step 1: Agent logged in successfully');",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"mobile\": \"7777777777\",\n    \"password\": \"password123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/auth/login/agent",
+									"host": ["{{base_url}}"],
+									"path": ["auth", "login", "agent"]
+								}
+							}
+						},
+						{
+							"name": "2. Create Shop Onboarding",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    const responseJson = pm.response.json();",
+											"    if (responseJson.success && responseJson.data.id) {",
+											"        pm.collectionVariables.set('shop_id', responseJson.data.id);",
+											"        console.log('✅ Step 2: Shop onboarding created with ID:', responseJson.data.id);",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{agent_token}}", "type": "string"}]
+								},
+								"method": "POST",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"customer_name\": \"Test Shop Owner\",\n    \"customer_mobile\": \"9876543210\",\n    \"team_leader_id\": 2\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/shops",
+									"host": ["{{base_url}}"],
+									"path": ["shops"]
+								}
+							}
+						},
+						{
+							"name": "3. Leader Login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const responseJson = pm.response.json();",
+											"    if (responseJson.success && responseJson.data.token) {",
+											"        pm.collectionVariables.set('leader_token', responseJson.data.token);",
+											"        pm.collectionVariables.set('auth_token', responseJson.data.token);",
+											"        console.log('✅ Step 3: Leader logged in successfully');",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"mobile\": \"8888888888\",\n    \"password\": \"password123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/auth/login/leader",
+									"host": ["{{base_url}}"],
+									"path": ["auth", "login", "leader"]
+								}
+							}
+						},
+						{
+							"name": "4. Leader Approves Shop",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    console.log('✅ Step 4: Leader approved the shop');",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{leader_token}}", "type": "string"}]
+								},
+								"method": "PUT",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"approved\",\n    \"reject_remark\": null\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/shops/{{shop_id}}/status",
+									"host": ["{{base_url}}"],
+									"path": ["shops", "{{shop_id}}", "status"]
+								}
+							}
+						},
+						{
+							"name": "5. Admin Login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const responseJson = pm.response.json();",
+											"    if (responseJson.success && responseJson.data.token) {",
+											"        pm.collectionVariables.set('admin_token', responseJson.data.token);",
+											"        pm.collectionVariables.set('auth_token', responseJson.data.token);",
+											"        console.log('✅ Step 5: Admin logged in successfully');",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"mobile\": \"9999999999\",\n    \"password\": \"password\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/auth/login/admin",
+									"host": ["{{base_url}}"],
+									"path": ["auth", "login", "admin"]
+								}
+							}
+						},
+						{
+							"name": "6. Admin Final Approval (Triggers Payout)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    console.log('🎉 Step 6: Admin approved - PAYOUT TRIGGERED!');",
+											"    console.log('Agent will receive onboarding payout based on monthly slab');",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "PUT",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"admin_approved\",\n    \"admin_remark\": \"Workflow test - payout triggered\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/shops/admin/{{shop_id}}/approval",
+									"host": ["{{base_url}}"],
+									"path": ["shops", "admin", "{{shop_id}}", "approval"]
+								}
+							}
+						},
+						{
+							"name": "7. Check Agent Payout History",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const responseJson = pm.response.json();",
+											"    if (responseJson.success) {",
+											"        console.log('✅ Step 7: Payout history retrieved');",
+											"        console.log('Total Payout:', responseJson.data.summary.total_payout);",
+											"        console.log('This Month Payout:', responseJson.data.summary.this_month_payout);",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{agent_token}}", "type": "string"}]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/wallet/payouts",
+									"host": ["{{base_url}}"],
+									"path": ["wallet", "payouts"]
+								}
+							}
+						}
+					]
 				}
 			]
 		}
