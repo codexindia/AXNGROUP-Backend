@@ -53,6 +53,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::middleware('role:leader')->get('/leader', [ShopController::class, 'getByLeader']); // Leader only
         Route::middleware('role:leader')->put('/{id}/status', [ShopController::class, 'updateStatus']); // Leader only
         Route::get('/{id}', [ShopController::class, 'show']);
+        
+        // Admin Routes
+        Route::middleware('role:admin')->group(function () {
+            Route::get('/admin/onboarding-history', [ShopController::class, 'getOnboardingHistory']);
+            Route::get('/admin/bank-transfer-history', [ShopController::class, 'getBankTransferHistory']);
+            Route::get('/admin/daily-reports', [ShopController::class, 'getDailyReports']);
+        });
     });
     
     // Bank Transfer Module
