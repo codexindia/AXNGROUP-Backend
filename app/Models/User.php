@@ -23,6 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'parent_id',
         'referral_code',
         'is_blocked',
     ];
@@ -66,28 +67,40 @@ class User extends Authenticatable
         return $this->hasMany(Shop::class, 'agent_id');
     }
 
-    // Leader's assigned shops
-    public function assignedShops()
-    {
-        return $this->hasMany(Shop::class, 'team_leader_id');
-    }
-
     // Agent's bank transfers
     public function bankTransfers()
     {
         return $this->hasMany(BankTransfer::class, 'agent_id');
     }
 
-    // Leader's assigned bank transfers
-    public function assignedBankTransfers()
-    {
-        return $this->hasMany(BankTransfer::class, 'team_leader_id');
-    }
-
     // User's withdrawals
     public function withdrawals()
     {
         return $this->hasMany(Withdrawal::class);
+    }
+
+    // Parent relationship (leader for agent, admin for leader)
+    public function parent()
+    {
+        return $this->belongsTo(User::class, 'parent_id');
+    }
+
+    // Children relationship (agents for leader, leaders for admin)
+    public function children()
+    {
+        return $this->hasMany(User::class, 'parent_id');
+    }
+
+    // Get all agents under this leader (if user is leader)
+    public function agents()
+    {
+        return $this->hasMany(User::class, 'parent_id')->where('role', 'agent');
+    }
+
+    // Get all leaders under this admin (if user is admin)
+    public function leaders()
+    {
+        return $this->hasMany(User::class, 'parent_id')->where('role', 'leader');
     }
 
     // Boot method to create wallet for agents and leaders

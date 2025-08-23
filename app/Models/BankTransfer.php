@@ -11,7 +11,7 @@ class BankTransfer extends Model
 
     protected $fillable = [
         'agent_id',
-        'team_leader_id',
+        'shop_id',
         'customer_name',
         'customer_mobile',
         'amount',
@@ -29,8 +29,14 @@ class BankTransfer extends Model
         return $this->belongsTo(User::class, 'agent_id');
     }
 
-    public function teamLeader()
+    public function shop()
     {
-        return $this->belongsTo(User::class, 'team_leader_id');
+        return $this->belongsTo(Shop::class);
+    }
+
+    // Get the team leader through the agent's parent relationship
+    public function getTeamLeaderAttribute()
+    {
+        return $this->agent ? $this->agent->parent : null;
     }
 }

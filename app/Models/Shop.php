@@ -11,7 +11,6 @@ class Shop extends Model
 
     protected $fillable = [
         'agent_id',
-        'team_leader_id',
         'customer_name',
         'customer_mobile',
         'status',
@@ -23,8 +22,14 @@ class Shop extends Model
         return $this->belongsTo(User::class, 'agent_id');
     }
 
-    public function teamLeader()
+    public function bankTransfers()
     {
-        return $this->belongsTo(User::class, 'team_leader_id');
+        return $this->hasMany(BankTransfer::class);
+    }
+
+    // Get the team leader through the agent's parent relationship
+    public function getTeamLeaderAttribute()
+    {
+        return $this->agent ? $this->agent->parent : null;
     }
 }

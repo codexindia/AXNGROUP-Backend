@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Shop;
 
 use App\Http\Controllers\Controller;
 use App\Models\Shop;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -16,8 +17,7 @@ class ShopController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'customer_name' => 'required|string|max:255',
-            'customer_mobile' => 'required|string|max:15',
-            'team_leader_id' => 'required|exists:users,id'
+            'customer_mobile' => 'required|string|max:15'
         ]);
 
         if ($validator->fails()) {
@@ -38,7 +38,6 @@ class ShopController extends Controller
 
         $shop = Shop::create([
             'agent_id' => $request->user()->id,
-            'team_leader_id' => $request->team_leader_id,
             'customer_name' => $request->customer_name,
             'customer_mobile' => $request->customer_mobile,
             'status' => 'pending'
@@ -47,14 +46,14 @@ class ShopController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Shop onboarding request created successfully',
-            'data' => $shop->load(['agent', 'teamLeader'])
+            'data' => $shop->load(['agent'])
         ], 201);
     }
 
     public function getByAgent(Request $request)
     {
         $shops = Shop::where('agent_id', $request->user()->id)
-                    ->with(['teamLeader'])
+                  //  ->with(['agent']) // Load only agent (do not include parent/leader)
                     ->orderBy('created_at', 'desc')
                     ->paginate(20);
 
@@ -73,8 +72,11 @@ class ShopController extends Controller
             ], 403);
         }
 
-        $shops = Shop::where('team_leader_id', $request->user()->id)
-                    ->with(['agent'])
+        // Get all agents under this leader first
+        $agentIds = $request->user()->agents()->pluck('id');
+
+        $shops = Shop::whereIn('agent_id', $agentIds)
+                    ->with(['agent:id,name'])
                     ->orderBy('created_at', 'desc')
                     ->paginate(20);
 
@@ -84,53 +86,9 @@ class ShopController extends Controller
         ]);
     }
 
-    public function updateStatus(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|in:approved,rejected',
-            'reject_remark' => 'required_if:status,rejected|string'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $shop = Shop::find($id);
-
-        if (!$shop) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Shop not found'
-            ], 404);
-        }
-
-        // Only the assigned team leader can update status
-        if ($request->user()->role !== 'leader' || $shop->team_leader_id !== $request->user()->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized to update this shop status'
-            ], 403);
-        }
-
-        $shop->update([
-            'status' => $request->status,
-            'reject_remark' => $request->status === 'rejected' ? $request->reject_remark : null
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Shop status updated successfully',
-            'data' => $shop->load(['agent', 'teamLeader'])
-        ]);
-    }
-
     public function show($id)
     {
-        $shop = Shop::with(['agent', 'teamLeader'])->find($id);
+        $shop = Shop::with(['agent.parent'])->find($id);
 
         if (!$shop) {
             return response()->json([
@@ -141,7 +99,11 @@ class ShopController extends Controller
 
         // Check if user has permission to view this shop
         $user = auth()->user();
-        if ($shop->agent_id !== $user->id && $shop->team_leader_id !== $user->id && !in_array($user->role, ['admin'])) {
+        $isAgentOwner = $shop->agent_id === $user->id;
+        $isTeamLeader = $user->role === 'leader' && $shop->agent->parent_id === $user->id;
+        $isAdmin = in_array($user->role, ['admin']);
+        
+        if (!$isAgentOwner && !$isTeamLeader && !$isAdmin) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized to view this shop'
@@ -169,7 +131,7 @@ class ShopController extends Controller
         $validator = Validator::make($request->all(), [
             'status' => 'nullable|in:pending,approved,rejected',
             'agent_id' => 'nullable|exists:users,id',
-            'team_leader_id' => 'nullable|exists:users,id',
+            'leader_id' => 'nullable|exists:users,id', // Changed from team_leader_id to leader_id
             'date_from' => 'nullable|date',
             'date_to' => 'nullable|date|after_or_equal:date_from',
             'search' => 'nullable|string|max:255',
@@ -184,7 +146,7 @@ class ShopController extends Controller
             ], 422);
         }
 
-        $query = Shop::with(['agent', 'teamLeader']);
+        $query = Shop::with(['agent.parent']);
 
         // Apply filters
         if ($request->filled('status')) {
@@ -195,8 +157,10 @@ class ShopController extends Controller
             $query->where('agent_id', $request->agent_id);
         }
 
-        if ($request->filled('team_leader_id')) {
-            $query->where('team_leader_id', $request->team_leader_id);
+        if ($request->filled('leader_id')) {
+            // Filter shops by leader - get agents under this leader first
+            $agentIds = User::where('parent_id', $request->leader_id)->pluck('id');
+            $query->whereIn('agent_id', $agentIds);
         }
 
         if ($request->filled('date_from')) {
@@ -215,7 +179,7 @@ class ShopController extends Controller
                   ->orWhereHas('agent', function ($q) use ($search) {
                       $q->where('name', 'like', "%{$search}%");
                   })
-                  ->orWhereHas('teamLeader', function ($q) use ($search) {
+                  ->orWhereHas('agent.parent', function ($q) use ($search) {
                       $q->where('name', 'like', "%{$search}%");
                   });
             });
@@ -254,7 +218,7 @@ class ShopController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'status' => 'nullable|in:pending,approved,rejected,admin_approved,admin_rejected',
+            'status' => 'nullable|in:pending,approved,rejected',
             'date_from' => 'nullable|date',
             'date_to' => 'nullable|date|after_or_equal:date_from',
             'min_amount' => 'nullable|numeric|min:0',
@@ -272,7 +236,7 @@ class ShopController extends Controller
         }
 
         // Use BankTransfer model instead of Shop
-        $query = \App\Models\BankTransfer::with(['agent', 'teamLeader']);
+        $query = \App\Models\BankTransfer::with(['agent.parent']);
 
         // Apply filters
         if ($request->filled('status')) {
@@ -312,7 +276,7 @@ class ShopController extends Controller
             'total_amount' => \App\Models\BankTransfer::sum('amount') ?? 0,
             'pending_transfers' => \App\Models\BankTransfer::where('status', 'pending')->count(),
             'approved_transfers' => \App\Models\BankTransfer::where('status', 'approved')->count(),
-            'admin_approved_transfers' => \App\Models\BankTransfer::where('status', 'admin_approved')->count(),
+            'rejected_transfers' => \App\Models\BankTransfer::where('status', 'rejected')->count(),
             'today_transfers' => \App\Models\BankTransfer::whereDate('created_at', Carbon::today())->count(),
             'today_amount' => \App\Models\BankTransfer::whereDate('created_at', Carbon::today())->sum('amount') ?? 0,
             'this_month_amount' => \App\Models\BankTransfer::whereMonth('created_at', Carbon::now()->month)->sum('amount') ?? 0
@@ -409,14 +373,16 @@ class ShopController extends Controller
                         ->limit(10)
                         ->get();
 
-        $topLeaders = Shop::select('team_leader_id', DB::raw('count(*) as total_approved'))
-                         ->whereBetween('updated_at', [
+        $topLeaders = Shop::select('users.id as leader_id', 'users.name as leader_name', DB::raw('count(shops.id) as total_approved'))
+                         ->join('users as agents', 'shops.agent_id', '=', 'agents.id')
+                         ->join('users', 'agents.parent_id', '=', 'users.id')
+                         ->whereBetween('shops.updated_at', [
                              $date->copy()->subDays($days - 1)->startOfDay(),
                              $date->copy()->endOfDay()
                          ])
-                         ->where('status', 'approved')
-                         ->with('teamLeader:id,name')
-                         ->groupBy('team_leader_id')
+                         ->where('shops.status', 'approved')
+                         ->where('users.role', 'leader')
+                         ->groupBy('users.id', 'users.name')
                          ->orderBy('total_approved', 'desc')
                          ->limit(10)
                          ->get();
@@ -435,12 +401,12 @@ class ShopController extends Controller
     }
 
     /**
-     * Admin final approval for onboarding (triggers payout)
+     * Admin approval for onboarding (triggers payout)
      */
     public function adminApproval(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:admin_approved,admin_rejected',
+            'status' => 'required|in:approved,rejected',
             'admin_remark' => 'nullable|string'
         ]);
 
@@ -452,11 +418,11 @@ class ShopController extends Controller
             ], 422);
         }
 
-        // Only admin can do final approval
+        // Only admin can do approval
         if ($request->user()->role !== 'admin') {
             return response()->json([
                 'success' => false,
-                'message' => 'Only admin can do final approval'
+                'message' => 'Only admin can approve/reject shops'
             ], 403);
         }
 
@@ -469,20 +435,21 @@ class ShopController extends Controller
             ], 404);
         }
 
-        // Shop must be approved by leader first
-        if ($shop->status !== 'approved') {
+        // Shop must be pending
+        if ($shop->status !== 'pending') {
             return response()->json([
                 'success' => false,
-                'message' => 'Shop must be approved by team leader first'
+                'message' => 'Shop has already been processed'
             ], 400);
         }
 
         $shop->update([
-            'status' => $request->status
+            'status' => $request->status,
+            'reject_remark' => $request->status === 'rejected' ? $request->admin_remark : null
         ]);
 
         // If admin approved, calculate and credit payout
-        if ($request->status === 'admin_approved') {
+        if ($request->status === 'approved') {
             $payoutAmount = PayoutService::calculateOnboardingPayout($shop->agent_id);
             
             if ($payoutAmount > 0) {
@@ -497,8 +464,8 @@ class ShopController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Shop admin approval updated successfully',
-            'data' => $shop->load(['agent', 'teamLeader'])
+            'message' => 'Shop approval updated successfully',
+            'data' => $shop->load(['agent.parent'])
         ]);
     }
 
@@ -507,9 +474,9 @@ class ShopController extends Controller
      */
     public function getPendingForAdmin()
     {
-        $shops = Shop::where('status', 'approved') // Leader approved, waiting for admin
-                     ->with(['agent', 'teamLeader'])
-                     ->orderBy('updated_at', 'asc')
+        $shops = Shop::where('status', 'pending') // Direct pending, no leader approval needed
+                     ->with(['agent.parent'])
+                     ->orderBy('created_at', 'asc')
                      ->paginate(20);
 
         return response()->json([

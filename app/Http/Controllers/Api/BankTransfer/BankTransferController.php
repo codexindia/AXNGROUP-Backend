@@ -13,10 +13,10 @@ class BankTransferController extends Controller
     public function create(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'shop_id' => 'required|exists:shops,id',
             'customer_name' => 'required|string|max:255',
             'customer_mobile' => 'required|string|max:15',
-            'amount' => 'required|numeric|min:1',
-            'team_leader_id' => 'required|exists:users,id'
+            'amount' => 'required|numeric|min:1'
         ]);
 
         if ($validator->fails()) {
@@ -37,7 +37,7 @@ class BankTransferController extends Controller
 
         $bankTransfer = BankTransfer::create([
             'agent_id' => $request->user()->id,
-            'team_leader_id' => $request->team_leader_id,
+            'shop_id' => $request->shop_id,
             'customer_name' => $request->customer_name,
             'customer_mobile' => $request->customer_mobile,
             'amount' => $request->amount,
@@ -47,14 +47,14 @@ class BankTransferController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Bank transfer request created successfully',
-            'data' => $bankTransfer->load(['agent', 'teamLeader'])
+            'data' => $bankTransfer->load(['agent.parent', 'shop'])
         ], 201);
     }
 
     public function getByAgent(Request $request)
     {
         $bankTransfers = BankTransfer::where('agent_id', $request->user()->id)
-                                   ->with(['teamLeader'])
+                                   ->with(['agent.parent'])
                                    ->orderBy('created_at', 'desc')
                                    ->paginate(20);
 
@@ -73,7 +73,10 @@ class BankTransferController extends Controller
             ], 403);
         }
 
-        $bankTransfers = BankTransfer::where('team_leader_id', $request->user()->id)
+        // Get all agents under this leader first
+        $agentIds = $request->user()->agents()->pluck('id');
+
+        $bankTransfers = BankTransfer::whereIn('agent_id', $agentIds)
                                    ->with(['agent'])
                                    ->orderBy('created_at', 'desc')
                                    ->paginate(20);
@@ -84,60 +87,9 @@ class BankTransferController extends Controller
         ]);
     }
 
-    public function updateStatus(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|in:approved,rejected',
-            'amount_change_remark' => 'nullable|string',
-            'reject_remark' => 'required_if:status,rejected|string'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $bankTransfer = BankTransfer::find($id);
-
-        if (!$bankTransfer) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Bank transfer not found'
-            ], 404);
-        }
-
-        // Only the assigned team leader can update status
-        if ($request->user()->role !== 'leader' || $bankTransfer->team_leader_id !== $request->user()->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized to update this bank transfer status'
-            ], 403);
-        }
-
-        $bankTransfer->update([
-            'status' => $request->status,
-            'amount_change_remark' => $request->amount_change_remark,
-            'reject_remark' => $request->status === 'rejected' ? $request->reject_remark : null
-        ]);
-
-        // If approved, credit agent's wallet
-        if ($request->status === 'approved') {
-            $this->creditAgentWallet($bankTransfer);
-        }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Bank transfer status updated successfully',
-            'data' => $bankTransfer->load(['agent', 'teamLeader'])
-        ]);
-    }
-
     public function show($id)
     {
-        $bankTransfer = BankTransfer::with(['agent', 'teamLeader'])->find($id);
+        $bankTransfer = BankTransfer::with(['agent.parent', 'shop'])->find($id);
 
         if (!$bankTransfer) {
             return response()->json([
@@ -148,7 +100,11 @@ class BankTransferController extends Controller
 
         // Check if user has permission to view this bank transfer
         $user = auth()->user();
-        if ($bankTransfer->agent_id !== $user->id && $bankTransfer->team_leader_id !== $user->id && !in_array($user->role, ['admin'])) {
+        $isAgentOwner = $bankTransfer->agent_id === $user->id;
+        $isTeamLeader = $user->role === 'leader' && $bankTransfer->agent->parent_id === $user->id;
+        $isAdmin = in_array($user->role, ['admin']);
+        
+        if (!$isAgentOwner && !$isTeamLeader && !$isAdmin) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized to view this bank transfer'
@@ -168,13 +124,14 @@ class BankTransferController extends Controller
     }
 
     /**
-     * Admin final approval for bank transfer (triggers payout)
+     * Admin approval for bank transfer (triggers payout)
      */
     public function adminApproval(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:admin_approved,admin_rejected',
-            'admin_remark' => 'nullable|string'
+            'status' => 'required|in:approved,rejected',
+            'admin_remark' => 'nullable|string',
+            'amount_change_remark' => 'nullable|string'
         ]);
 
         if ($validator->fails()) {
@@ -185,11 +142,11 @@ class BankTransferController extends Controller
             ], 422);
         }
 
-        // Only admin can do final approval
+        // Only admin can do approval
         if ($request->user()->role !== 'admin') {
             return response()->json([
                 'success' => false,
-                'message' => 'Only admin can do final approval'
+                'message' => 'Only admin can approve/reject bank transfers'
             ], 403);
         }
 
@@ -202,20 +159,22 @@ class BankTransferController extends Controller
             ], 404);
         }
 
-        // Bank transfer must be approved by leader first
-        if ($bankTransfer->status !== 'approved') {
+        // Bank transfer must be pending
+        if ($bankTransfer->status !== 'pending') {
             return response()->json([
                 'success' => false,
-                'message' => 'Bank transfer must be approved by team leader first'
+                'message' => 'Bank transfer has already been processed'
             ], 400);
         }
 
         $bankTransfer->update([
-            'status' => $request->status
+            'status' => $request->status,
+            'amount_change_remark' => $request->amount_change_remark,
+            'reject_remark' => $request->status === 'rejected' ? $request->admin_remark : null
         ]);
 
         // If admin approved, calculate and credit payout
-        if ($request->status === 'admin_approved') {
+        if ($request->status === 'approved') {
             // Check if transfer is eligible for payout
             if (PayoutService::isBankTransferEligible($bankTransfer->amount)) {
                 // Get agent's total bank transfer amount for current month
@@ -241,8 +200,8 @@ class BankTransferController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Bank transfer admin approval updated successfully',
-            'data' => $bankTransfer->load(['agent', 'teamLeader'])
+            'message' => 'Bank transfer approval updated successfully',
+            'data' => $bankTransfer->load(['agent.parent'])
         ]);
     }
 
@@ -251,9 +210,9 @@ class BankTransferController extends Controller
      */
     public function getPendingForAdmin()
     {
-        $bankTransfers = BankTransfer::where('status', 'approved') // Leader approved, waiting for admin
-                                   ->with(['agent', 'teamLeader'])
-                                   ->orderBy('updated_at', 'asc')
+        $bankTransfers = BankTransfer::where('status', 'pending') // Direct pending, no leader approval needed
+                                   ->with(['agent.parent', 'shop'])
+                                   ->orderBy('created_at', 'asc')
                                    ->paginate(20);
 
         return response()->json([

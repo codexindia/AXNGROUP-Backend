@@ -184,6 +184,7 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => 'leader',
+            'parent_id' => auth()->user()->id, // Set admin as parent of leader
             'is_blocked' => false,
         ]);
 
@@ -238,6 +239,7 @@ class AuthController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => 'agent',
+            'parent_id' => auth()->user()->id, // Set leader as parent of agent
             'referral_code' => $request->referral_code,
             'is_blocked' => false,
         ]);

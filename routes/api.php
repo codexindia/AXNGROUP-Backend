@@ -7,6 +7,9 @@ use App\Http\Controllers\Api\Wallet\WalletController;
 use App\Http\Controllers\Api\Shop\ShopController;
 use App\Http\Controllers\Api\BankTransfer\BankTransferController;
 use App\Http\Controllers\Api\Profile\ProfileController;
+use App\Http\Controllers\Api\RelationshipController;
+use App\Http\Controllers\Api\HierarchyController;
+use App\Http\Controllers\Api\TestController;
 
 /*
 |--------------------------------------------------------------------------
@@ -51,8 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('shops')->group(function () {
         Route::middleware('role:agent')->post('/', [ShopController::class, 'create']); // Agent only
         Route::middleware('role:agent')->get('/agent', [ShopController::class, 'getByAgent']); // Agent only
-        Route::middleware('role:leader')->get('/leader', [ShopController::class, 'getByLeader']); // Leader only
-        Route::middleware('role:leader')->put('/{id}/status', [ShopController::class, 'updateStatus']); // Leader only
+        Route::middleware('role:leader')->get('/leader', [ShopController::class, 'getByLeader']); // Leader view only
         Route::get('/{id}', [ShopController::class, 'show']);
         
         // Admin Routes
@@ -69,8 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('bank-transfers')->group(function () {
         Route::middleware('role:agent')->post('/', [BankTransferController::class, 'create']); // Agent only
         Route::middleware('role:agent')->get('/agent', [BankTransferController::class, 'getByAgent']); // Agent only
-        Route::middleware('role:leader')->get('/leader', [BankTransferController::class, 'getByLeader']); // Leader only
-        Route::middleware('role:leader')->put('/{id}/status', [BankTransferController::class, 'updateStatus']); // Leader only
+        Route::middleware('role:leader')->get('/leader', [BankTransferController::class, 'getByLeader']); // Leader view only
         Route::get('/{id}', [BankTransferController::class, 'show']);
         
         // Admin Routes
@@ -89,6 +90,26 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/bank-details/{id}', [ProfileController::class, 'updateBankDetails']);
         Route::delete('/bank-details/{id}', [ProfileController::class, 'deleteBankDetails']);
     });
+    
+    // Relationship Module - For tracking Leader-Agent-Shop relationships
+    Route::prefix('relationships')->group(function () {
+        Route::middleware('role:leader,admin')->get('/leader/{leaderId}/agents', [RelationshipController::class, 'getAgentsUnderLeader']);
+        Route::middleware('role:leader,admin')->get('/leader/{leaderId}/hierarchy', [RelationshipController::class, 'getLeaderHierarchy']);
+        Route::middleware('role:agent,leader,admin')->get('/shop/{shopId}/bank-transfers', [RelationshipController::class, 'getShopBankTransfers']);
+        Route::middleware('role:agent,leader,admin')->get('/agent/{agentId}/bank-transfers', [RelationshipController::class, 'getAgentBankTransfers']);
+        Route::middleware('role:leader,admin')->get('/check-relation/{agentId}/{leaderId}', [RelationshipController::class, 'checkAgentLeaderRelation']);
+    });
+    
+    // Hierarchy Module - Simplified parent-child relationships
+    Route::prefix('hierarchy')->group(function () {
+        Route::middleware('role:admin')->get('/my-leaders', [HierarchyController::class, 'getLeadersUnderAdmin']);
+        Route::middleware('role:leader')->get('/my-agents', [HierarchyController::class, 'getAgentsUnderLeader']);
+        Route::middleware('role:agent,leader')->get('/my-parent', [HierarchyController::class, 'getMyParent']);
+        Route::middleware('role:admin')->get('/complete', [HierarchyController::class, 'getCompleteHierarchy']);
+    });
+    
+    // Test endpoint for verifying relationships
+    Route::get('/test-relationships', [TestController::class, 'testRelationships']);
     
 });
 

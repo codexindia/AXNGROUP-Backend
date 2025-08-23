@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "axn-group-api-collection",
 		"name": "AXN Group API Collection - Updated",
-		"description": "Complete API collection for Agent-Leader-Admin system with role-based access control and clean response structures. Admin creates leaders, leaders create agents, agents onboard shops.",
+		"description": "Complete API collection for AXN Group MLM system with role-based authentication and approval workflows. Status values: pending → approved/rejected.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"auth": {
@@ -616,7 +616,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"customer_name\": \"Shop Owner\",\n    \"customer_mobile\": \"9876543210\",\n    \"team_leader_id\": \"{{user_id}}\"\n}"
+							"raw": "{\n    \"customer_name\": \"Shop Owner\",\n    \"customer_mobile\": \"9876543210\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/shops",
@@ -673,38 +673,6 @@
 					"response": []
 				},
 				{
-					"name": "Update Shop Status (Leader Only)",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{leader_token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"status\": \"approved\",\n    \"reject_remark\": \"Ready for admin approval\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/shops/{{shop_id}}/status",
-							"host": ["{{base_url}}"],
-							"path": ["shops", "{{shop_id}}", "status"]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Get Shop Details",
 					"request": {
 						"auth": {
@@ -752,24 +720,8 @@
 				},
 				{
 					"name": "Admin Approval for Shop",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    const responseJson = pm.response.json();",
-									"    if (responseJson.success && responseJson.data.id) {",
-									"        pm.collectionVariables.set('shop_id', responseJson.data.id);",
-									"        console.log('Shop ID saved:', responseJson.data.id);",
-									"    }",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
 					"request": {
+						"description": "STREAMLINED WORKFLOW: Admin directly approves/rejects shop onboarding requests without leader pre-approval. Status flows: pending → approved/rejected. Triggers payout calculation on approval.",
 						"auth": {
 							"type": "bearer",
 							"bearer": [
@@ -789,7 +741,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"status\": \"admin_approved\",\n    \"admin_remark\": \"Approved for payout calculation\"\n}"
+							"raw": "{\n    \"status\": \"approved\",\n    \"admin_remark\": \"Approved for payout calculation\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/shops/admin/{{shop_id}}/approval",
@@ -797,6 +749,23 @@
 							"path": ["shops", "admin", "{{shop_id}}", "approval"]
 						}
 					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.success && responseJson.data.id) {",
+									"        pm.collectionVariables.set('shop_id', responseJson.data.id);",
+									"        console.log('Shop ID saved:', responseJson.data.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"response": [
 						{
 							"name": "Admin Approval Success Response",
@@ -821,7 +790,32 @@
 							"code": 200,
 							"_postman_previewlanguage": "json",
 							"header": [{"key": "Content-Type", "value": "application/json"}],
-							"body": "{\n    \"success\": true,\n    \"message\": \"Shop admin approval updated successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"agent_id\": 3,\n        \"team_leader_id\": 2,\n        \"customer_name\": \"Shop Owner\",\n        \"customer_mobile\": \"9876543210\",\n        \"status\": \"admin_approved\",\n        \"reject_remark\": null,\n        \"created_at\": \"2025-08-17T10:00:00.000000Z\",\n        \"updated_at\": \"2025-08-17T10:30:00.000000Z\",\n        \"agent\": {\n            \"id\": 3,\n            \"name\": \"Sales Agent\",\n            \"mobile\": \"7777777777\"\n        },\n        \"team_leader\": {\n            \"id\": 2,\n            \"name\": \"Team Leader\",\n            \"mobile\": \"8888888888\"\n        }\n    }\n}"
+							"body": "{\n    \"success\": true,\n    \"message\": \"Shop approval updated successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"agent_id\": 3,\n        \"customer_name\": \"Shop Owner\",\n        \"customer_mobile\": \"9876543210\",\n        \"status\": \"approved\",\n        \"reject_remark\": null,\n        \"created_at\": \"2025-08-17T10:00:00.000000Z\",\n        \"updated_at\": \"2025-08-17T10:30:00.000000Z\",\n        \"agent\": {\n            \"id\": 3,\n            \"name\": \"Sales Agent\",\n            \"mobile\": \"7777777777\",\n            \"parent\": {\n                \"id\": 2,\n                \"name\": \"Team Leader\",\n                \"mobile\": \"8888888888\"\n            }\n        }\n    }\n}"
+						},
+						{
+							"name": "Rejection Response Example",
+							"originalRequest": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "PUT",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"rejected\",\n    \"admin_remark\": \"Insufficient documentation provided\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/shops/admin/1/approval",
+									"host": ["{{base_url}}"],
+									"path": ["shops", "admin", "1", "approval"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Shop approval updated successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"agent_id\": 3,\n        \"customer_name\": \"Shop Owner\",\n        \"customer_mobile\": \"9876543210\",\n        \"status\": \"rejected\",\n        \"reject_remark\": \"Insufficient documentation provided\",\n        \"created_at\": \"2025-08-17T10:00:00.000000Z\",\n        \"updated_at\": \"2025-08-17T10:35:00.000000Z\",\n        \"agent\": {\n            \"id\": 3,\n            \"name\": \"Sales Agent\",\n            \"mobile\": \"7777777777\",\n            \"parent\": {\n                \"id\": 2,\n                \"name\": \"Team Leader\",\n                \"mobile\": \"8888888888\"\n            }\n        }\n    }\n}"
 						}
 					]
 				}
@@ -869,7 +863,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"customer_name\": \"Customer Name\",\n    \"customer_mobile\": \"9876543210\",\n    \"amount\": 150000.00,\n    \"team_leader_id\": \"{{user_id}}\"\n}"
+							"raw": "{\n    \"shop_id\": \"{{shop_id}}\",\n    \"customer_name\": \"Customer Name\",\n    \"customer_mobile\": \"9876543210\",\n    \"amount\": 150000.00\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/bank-transfers",
@@ -926,38 +920,6 @@
 					"response": []
 				},
 				{
-					"name": "Update Bank Transfer Status (Leader Only)",
-					"request": {
-						"auth": {
-							"type": "bearer",
-							"bearer": [
-								{
-									"key": "token",
-									"value": "{{leader_token}}",
-									"type": "string"
-								}
-							]
-						},
-						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"status\": \"approved\",\n    \"amount_change_remark\": \"Amount verified\",\n    \"reject_remark\": null\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/bank-transfers/{{bank_transfer_id}}/status",
-							"host": ["{{base_url}}"],
-							"path": ["bank-transfers", "{{bank_transfer_id}}", "status"]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "Get Bank Transfer Details",
 					"request": {
 						"auth": {
@@ -1005,24 +967,8 @@
 				},
 				{
 					"name": "Admin Approval for Bank Transfer",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    const responseJson = pm.response.json();",
-									"    if (responseJson.success && responseJson.data.id) {",
-									"        pm.collectionVariables.set('bank_transfer_id', responseJson.data.id);",
-									"        console.log('Bank Transfer ID saved:', responseJson.data.id);",
-									"    }",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
 					"request": {
+						"description": "STREAMLINED WORKFLOW: Admin directly approves/rejects bank transfer requests without leader pre-approval. Status flows: pending → approved/rejected. Triggers payout calculation on approval based on monthly volume.",
 						"auth": {
 							"type": "bearer",
 							"bearer": [
@@ -1042,7 +988,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"status\": \"admin_approved\",\n    \"admin_remark\": \"Approved for payout calculation\"\n}"
+							"raw": "{\n    \"status\": \"approved\",\n    \"admin_remark\": \"Approved for payout calculation\",\n    \"amount_change_remark\": \"Amount verified and approved\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/bank-transfers/admin/{{bank_transfer_id}}/approval",
@@ -1050,6 +996,23 @@
 							"path": ["bank-transfers", "admin", "{{bank_transfer_id}}", "approval"]
 						}
 					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.success && responseJson.data.id) {",
+									"        pm.collectionVariables.set('bank_transfer_id', responseJson.data.id);",
+									"        console.log('Bank Transfer ID saved:', responseJson.data.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
 					"response": [
 						{
 							"name": "Admin Approval Success Response",
@@ -1074,7 +1037,7 @@
 							"code": 200,
 							"_postman_previewlanguage": "json",
 							"header": [{"key": "Content-Type", "value": "application/json"}],
-							"body": "{\n    \"success\": true,\n    \"message\": \"Bank transfer admin approval updated successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"agent_id\": 3,\n        \"team_leader_id\": 2,\n        \"customer_name\": \"Customer Name\",\n        \"customer_mobile\": \"9876543210\",\n        \"amount\": \"150000.00\",\n        \"status\": \"admin_approved\",\n        \"amount_change_remark\": null,\n        \"reject_remark\": null,\n        \"created_at\": \"2025-08-17T10:00:00.000000Z\",\n        \"updated_at\": \"2025-08-17T10:30:00.000000Z\",\n        \"agent\": {\n            \"id\": 3,\n            \"name\": \"Sales Agent\",\n            \"mobile\": \"7777777777\"\n        },\n        \"team_leader\": {\n            \"id\": 2,\n            \"name\": \"Team Leader\",\n            \"mobile\": \"8888888888\"\n        }\n    }\n}"
+							"body": "{\n    \"success\": true,\n    \"message\": \"Bank transfer approval updated successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"agent_id\": 3,\n        \"shop_id\": 1,\n        \"customer_name\": \"Customer Name\",\n        \"customer_mobile\": \"9876543210\",\n        \"amount\": \"150000.00\",\n        \"status\": \"approved\",\n        \"amount_change_remark\": \"Amount verified and approved\",\n        \"reject_remark\": null,\n        \"created_at\": \"2025-08-17T10:00:00.000000Z\",\n        \"updated_at\": \"2025-08-17T10:30:00.000000Z\",\n        \"agent\": {\n            \"id\": 3,\n            \"name\": \"Sales Agent\",\n            \"mobile\": \"7777777777\",\n            \"parent\": {\n                \"id\": 2,\n                \"name\": \"Team Leader\",\n                \"mobile\": \"8888888888\"\n            }\n        },\n        \"shop\": {\n            \"id\": 1,\n            \"customer_name\": \"Shop Owner\",\n            \"customer_mobile\": \"9876543210\",\n            \"status\": \"approved\"\n        }\n    }\n}"
 						}
 					]
 				}
@@ -1446,7 +1409,7 @@
 								"header": [{"key": "Content-Type", "value": "application/json"}],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"customer_name\": \"Test Shop Owner\",\n    \"customer_mobile\": \"9876543210\",\n    \"team_leader_id\": 2\n}"
+									"raw": "{\n    \"customer_name\": \"Test Shop Owner\",\n    \"customer_mobile\": \"9876543210\"\n}"
 								},
 								"url": {
 									"raw": "{{base_url}}/shops",
@@ -1456,74 +1419,7 @@
 							}
 						},
 						{
-							"name": "3. Leader Login",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"if (pm.response.code === 200) {",
-											"    const responseJson = pm.response.json();",
-											"    if (responseJson.success && responseJson.data.token) {",
-											"        pm.collectionVariables.set('leader_token', responseJson.data.token);",
-											"        pm.collectionVariables.set('auth_token', responseJson.data.token);",
-											"        console.log('✅ Step 3: Leader logged in successfully');",
-											"    }",
-											"}"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "POST",
-								"header": [{"key": "Content-Type", "value": "application/json"}],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"mobile\": \"8888888888\",\n    \"password\": \"password123\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/auth/login/leader",
-									"host": ["{{base_url}}"],
-									"path": ["auth", "login", "leader"]
-								}
-							}
-						},
-						{
-							"name": "4. Leader Approves Shop",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"if (pm.response.code === 200) {",
-											"    console.log('✅ Step 4: Leader approved the shop');",
-											"}"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"auth": {
-									"type": "bearer",
-									"bearer": [{"key": "token", "value": "{{leader_token}}", "type": "string"}]
-								},
-								"method": "PUT",
-								"header": [{"key": "Content-Type", "value": "application/json"}],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n    \"status\": \"approved\",\n    \"reject_remark\": null\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/shops/{{shop_id}}/status",
-									"host": ["{{base_url}}"],
-									"path": ["shops", "{{shop_id}}", "status"]
-								}
-							}
-						},
-						{
-							"name": "5. Admin Login",
+							"name": "3. Admin Login",
 							"event": [
 								{
 									"listen": "test",
@@ -1534,7 +1430,7 @@
 											"    if (responseJson.success && responseJson.data.token) {",
 											"        pm.collectionVariables.set('admin_token', responseJson.data.token);",
 											"        pm.collectionVariables.set('auth_token', responseJson.data.token);",
-											"        console.log('✅ Step 5: Admin logged in successfully');",
+											"        console.log('✅ Step 3: Admin logged in successfully');",
 											"    }",
 											"}"
 										],
@@ -1557,14 +1453,15 @@
 							}
 						},
 						{
-							"name": "6. Admin Final Approval (Triggers Payout)",
+							"name": "4. Admin Direct Approval (Triggers Payout)",
 							"event": [
 								{
 									"listen": "test",
 									"script": {
 										"exec": [
 											"if (pm.response.code === 200) {",
-											"    console.log('🎉 Step 6: Admin approved - PAYOUT TRIGGERED!');",
+											"    console.log('🎉 Step 4: Admin approved directly - PAYOUT TRIGGERED!');",
+											"    console.log('No leader approval needed - streamlined workflow');",
 											"    console.log('Agent will receive onboarding payout based on monthly slab');",
 											"}"
 										],
@@ -1581,7 +1478,7 @@
 								"header": [{"key": "Content-Type", "value": "application/json"}],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"status\": \"admin_approved\",\n    \"admin_remark\": \"Workflow test - payout triggered\"\n}"
+									"raw": "{\n    \"status\": \"approved\",\n    \"admin_remark\": \"Direct admin approval - no leader step needed\"\n}"
 								},
 								"url": {
 									"raw": "{{base_url}}/shops/admin/{{shop_id}}/approval",
@@ -1591,7 +1488,7 @@
 							}
 						},
 						{
-							"name": "7. Check Agent Payout History",
+							"name": "5. Check Agent Payout History",
 							"event": [
 								{
 									"listen": "test",
@@ -1600,7 +1497,7 @@
 											"if (pm.response.code === 200) {",
 											"    const responseJson = pm.response.json();",
 											"    if (responseJson.success) {",
-											"        console.log('✅ Step 7: Payout history retrieved');",
+											"        console.log('✅ Step 5: Payout history retrieved');",
 											"        console.log('Total Payout:', responseJson.data.summary.total_payout);",
 											"        console.log('This Month Payout:', responseJson.data.summary.this_month_payout);",
 											"    }",
