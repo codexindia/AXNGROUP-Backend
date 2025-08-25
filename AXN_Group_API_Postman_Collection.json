@@ -1235,6 +1235,372 @@
 			]
 		},
 		{
+			"name": "KYC",
+			"item": [
+				{
+					"name": "Submit KYC Documents",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "aadhar_number",
+									"value": "123456789012",
+									"description": "12-digit Aadhaar number",
+									"type": "text"
+								},
+								{
+									"key": "aadhar_photo",
+									"description": "Aadhaar card photo (JPEG/PNG, max 2MB)",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "pan_number",
+									"value": "ABCDE1234F",
+									"description": "10-character PAN number",
+									"type": "text"
+								},
+								{
+									"key": "pan_photo",
+									"description": "PAN card photo (JPEG/PNG, max 2MB)",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "bank_account_number",
+									"value": "1234567890123456",
+									"description": "Bank account number",
+									"type": "text"
+								},
+								{
+									"key": "bank_ifsc_code",
+									"value": "SBIN0001234",
+									"description": "Bank IFSC code",
+									"type": "text"
+								},
+								{
+									"key": "bank_name",
+									"value": "State Bank of India",
+									"description": "Bank name",
+									"type": "text"
+								},
+								{
+									"key": "account_holder_name",
+									"value": "John Doe",
+									"description": "Account holder name",
+									"type": "text"
+								},
+								{
+									"key": "passbook_photo",
+									"description": "Bank passbook photo (JPEG/PNG, max 2MB)",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "profile_photo",
+									"description": "User profile photo (JPEG/PNG, max 2MB)",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "working_city",
+									"value": "Mumbai",
+									"description": "Current working city",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/kyc/submit",
+							"host": ["{{base_url}}"],
+							"path": ["kyc", "submit"]
+						},
+						"description": "Agents and Leaders can submit their KYC documents for verification. All fields are mandatory including photos for Aadhaar, PAN, passbook and profile."
+					},
+					"response": [
+						{
+							"name": "KYC Submitted Successfully",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": []
+								},
+								"url": {
+									"raw": "{{base_url}}/kyc/submit",
+									"host": ["{{base_url}}"],
+									"path": ["kyc", "submit"]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"KYC documents submitted successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"user_id\": 2,\n        \"aadhar_number\": \"123456789012\",\n        \"aadhar_photo\": \"kyc/aadhar/aadhar_123456789012.jpg\",\n        \"pan_number\": \"ABCDE1234F\",\n        \"pan_photo\": \"kyc/pan/pan_ABCDE1234F.jpg\",\n        \"bank_account_number\": \"1234567890123456\",\n        \"bank_ifsc_code\": \"SBIN0001234\",\n        \"bank_name\": \"State Bank of India\",\n        \"account_holder_name\": \"John Doe\",\n        \"passbook_photo\": \"kyc/passbook/passbook_123456.jpg\",\n        \"profile_photo\": \"kyc/profile/profile_user2.jpg\",\n        \"working_city\": \"Mumbai\",\n        \"kyc_status\": \"pending\",\n        \"submitted_at\": \"2025-08-25T17:30:00.000000Z\",\n        \"created_at\": \"2025-08-25T17:30:00.000000Z\",\n        \"updated_at\": \"2025-08-25T17:30:00.000000Z\",\n        \"user\": {\n            \"id\": 2,\n            \"name\": \"Agent User\",\n            \"mobile\": \"9876543210\",\n            \"role\": \"agent\"\n        }\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Get My KYC Status",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/kyc/my-kyc",
+							"host": ["{{base_url}}"],
+							"path": ["kyc", "my-kyc"]
+						},
+						"description": "Get current user's KYC status and details. Only for agents and leaders."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All KYC Submissions (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/kyc/all?status=pending&role=agent&per_page=20",
+							"host": ["{{base_url}}"],
+							"path": ["kyc", "all"],
+							"query": [
+								{
+									"key": "status",
+									"value": "pending",
+									"description": "Filter by status: pending, approved, rejected"
+								},
+								{
+									"key": "role",
+									"value": "agent",
+									"description": "Filter by role: agent, leader"
+								},
+								{
+									"key": "date_from",
+									"value": "2025-08-01",
+									"description": "Filter from date",
+									"disabled": true
+								},
+								{
+									"key": "date_to",
+									"value": "2025-08-31",
+									"description": "Filter to date",
+									"disabled": true
+								},
+								{
+									"key": "search",
+									"value": "John",
+									"description": "Search by name, mobile, Aadhaar, PAN, etc.",
+									"disabled": true
+								},
+								{
+									"key": "per_page",
+									"value": "20",
+									"description": "Items per page (1-100)"
+								}
+							]
+						},
+						"description": "Admin can view all KYC submissions with filtering options."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Pending KYCs (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/kyc/pending",
+							"host": ["{{base_url}}"],
+							"path": ["kyc", "pending"]
+						},
+						"description": "Get all pending KYC submissions for admin review."
+					},
+					"response": []
+				},
+				{
+					"name": "Get KYC Details (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/kyc/1",
+							"host": ["{{base_url}}"],
+							"path": ["kyc", "1"]
+						},
+						"description": "Get detailed KYC information including all documents for admin review."
+					},
+					"response": []
+				},
+				{
+					"name": "Approve KYC (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"approved\",\n    \"remark\": \"All documents verified successfully\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/kyc/1/review",
+							"host": ["{{base_url}}"],
+							"path": ["kyc", "1", "review"]
+						},
+						"description": "Admin approves KYC after verifying all documents."
+					},
+					"response": [
+						{
+							"name": "KYC Approved",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"approved\",\n    \"remark\": \"All documents verified successfully\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/kyc/1/review",
+									"host": ["{{base_url}}"],
+									"path": ["kyc", "1", "review"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"KYC approved successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"user_id\": 2,\n        \"kyc_status\": \"approved\",\n        \"approved_at\": \"2025-08-25T18:00:00.000000Z\",\n        \"remark\": \"All documents verified successfully\",\n        \"user\": {\n            \"id\": 2,\n            \"name\": \"Agent User\",\n            \"mobile\": \"9876543210\",\n            \"role\": \"agent\"\n        },\n        \"approvedBy\": {\n            \"id\": 1,\n            \"name\": \"Admin User\"\n        }\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Reject KYC (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"rejected\",\n    \"remark\": \"Aadhaar photo is not clear, please resubmit with better quality\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/kyc/1/review",
+							"host": ["{{base_url}}"],
+							"path": ["kyc", "1", "review"]
+						},
+						"description": "Admin rejects KYC with reason for rejection."
+					},
+					"response": [
+						{
+							"name": "KYC Rejected",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"rejected\",\n    \"remark\": \"Aadhaar photo is not clear, please resubmit\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/kyc/1/review",
+									"host": ["{{base_url}}"],
+									"path": ["kyc", "1", "review"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"KYC rejected successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"user_id\": 2,\n        \"kyc_status\": \"rejected\",\n        \"approved_at\": \"2025-08-25T18:00:00.000000Z\",\n        \"remark\": \"Aadhaar photo is not clear, please resubmit with better quality\",\n        \"user\": {\n            \"id\": 2,\n            \"name\": \"Agent User\",\n            \"mobile\": \"9876543210\",\n            \"role\": \"agent\"\n        },\n        \"approvedBy\": {\n            \"id\": 1,\n            \"name\": \"Admin User\"\n        }\n    }\n}"
+						}
+					]
+				}
+			]
+		},
+		{
 			"name": "Admin Dashboard",
 			"item": [
 				{

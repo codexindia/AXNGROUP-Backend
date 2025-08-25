@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Wallet\WalletController;
 use App\Http\Controllers\Api\Shop\ShopController;
 use App\Http\Controllers\Api\BankTransfer\BankTransferController;
 use App\Http\Controllers\Api\Profile\ProfileController;
+use App\Http\Controllers\Api\Kyc\KycController;
 use App\Http\Controllers\Api\RelationshipController;
 use App\Http\Controllers\Api\HierarchyController;
 use App\Http\Controllers\Api\TestController;
@@ -89,6 +90,21 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/bank-details', [ProfileController::class, 'getBankDetails']);
         Route::put('/bank-details/{id}', [ProfileController::class, 'updateBankDetails']);
         Route::delete('/bank-details/{id}', [ProfileController::class, 'deleteBankDetails']);
+    });
+    
+    // KYC Module
+    Route::prefix('kyc')->group(function () {
+        // Agent/Leader Routes
+        Route::middleware('role:agent,leader')->post('/submit', [KycController::class, 'submitKyc']);
+        Route::middleware('role:agent,leader')->get('/my-kyc', [KycController::class, 'getMyKyc']);
+        
+        // Admin Routes
+        Route::middleware('role:admin')->group(function () {
+            Route::get('/all', [KycController::class, 'getAllKyc']);
+            Route::get('/pending', [KycController::class, 'getPendingKycs']);
+            Route::get('/{id}', [KycController::class, 'getKycDetails']);
+            Route::put('/{id}/review', [KycController::class, 'reviewKyc']);
+        });
     });
     
     // Relationship Module - For tracking Leader-Agent-Shop relationships

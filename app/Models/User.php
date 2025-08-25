@@ -61,6 +61,12 @@ class User extends Authenticatable
         return $this->hasOne(UserProfile::class);
     }
 
+    // KYC verification relationship
+    public function kycVerification()
+    {
+        return $this->hasOne(KycVerification::class);
+    }
+
     // Agent's shops
     public function shops()
     {
