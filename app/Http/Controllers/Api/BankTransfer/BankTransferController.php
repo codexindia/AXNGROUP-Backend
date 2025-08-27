@@ -13,9 +13,9 @@ class BankTransferController extends Controller
     public function create(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'shop_id' => 'required|exists:shops,id',
             'customer_name' => 'required|string|max:255',
             'customer_mobile' => 'required|string|max:15',
+            'shop_name' => 'nullable|string|max:255',
             'amount' => 'required|numeric|min:1'
         ]);
 
@@ -37,9 +37,9 @@ class BankTransferController extends Controller
 
         $bankTransfer = BankTransfer::create([
             'agent_id' => $request->user()->id,
-            'shop_id' => $request->shop_id,
             'customer_name' => $request->customer_name,
             'customer_mobile' => $request->customer_mobile,
+            'shop_name' => $request->shop_name,
             'amount' => $request->amount,
             'status' => 'pending'
         ]);
@@ -47,7 +47,7 @@ class BankTransferController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Bank transfer request created successfully',
-            'data' => $bankTransfer->load(['agent.parent', 'shop'])
+            'data' => $bankTransfer->load(['agent.parent'])
         ], 201);
     }
 
@@ -89,7 +89,7 @@ class BankTransferController extends Controller
 
     public function show($id)
     {
-        $bankTransfer = BankTransfer::with(['agent.parent', 'shop'])->find($id);
+        $bankTransfer = BankTransfer::with(['agent.parent'])->find($id);
 
         if (!$bankTransfer) {
             return response()->json([
@@ -211,7 +211,7 @@ class BankTransferController extends Controller
     public function getPendingForAdmin()
     {
         $bankTransfers = BankTransfer::where('status', 'pending') // Direct pending, no leader approval needed
-                                   ->with(['agent.parent', 'shop'])
+                                   ->with(['agent.parent'])
                                    ->orderBy('created_at', 'asc')
                                    ->paginate(20);
 

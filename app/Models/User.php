@@ -73,6 +73,12 @@ class User extends Authenticatable
         return $this->hasMany(Shop::class, 'agent_id');
     }
 
+    // Agent's reward passes
+    public function rewardPasses()
+    {
+        return $this->hasMany(RewardPass::class, 'agent_id');
+    }
+
     // Agent's bank transfers
     public function bankTransfers()
     {

@@ -22,11 +22,6 @@ class Shop extends Model
         return $this->belongsTo(User::class, 'agent_id');
     }
 
-    public function bankTransfers()
-    {
-        return $this->hasMany(BankTransfer::class);
-    }
-
     // Get the team leader through the agent's parent relationship
     public function getTeamLeaderAttribute()
     {

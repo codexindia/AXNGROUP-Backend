@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Shop;
 use App\Http\Controllers\Controller;
 use App\Models\Shop;
 use App\Models\User;
+use App\Models\RewardPass;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
@@ -482,6 +483,308 @@ class ShopController extends Controller
         return response()->json([
             'success' => true,
             'data' => $shops
+        ]);
+    }
+
+    /**
+     * Get agent statistics - total counts and amounts
+     */
+    public function getAgentStatistics(Request $request)
+    {
+        // Only agents can view their own statistics
+        if ($request->user()->role !== 'agent') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only agents can view their statistics'
+            ], 403);
+        }
+
+        $agentId = $request->user()->id;
+
+        // Shop onboarding statistics
+        $totalShops = Shop::where('agent_id', $agentId)->count();
+        $approvedShops = Shop::where('agent_id', $agentId)->where('status', 'approved')->count();
+        $pendingShops = Shop::where('agent_id', $agentId)->where('status', 'pending')->count();
+        $rejectedShops = Shop::where('agent_id', $agentId)->where('status', 'rejected')->count();
+
+        // Bank transfer statistics
+        $totalBankTransfers = \App\Models\BankTransfer::where('agent_id', $agentId)->count();
+        $approvedBankTransfers = \App\Models\BankTransfer::where('agent_id', $agentId)->where('status', 'approved')->count();
+        $pendingBankTransfers = \App\Models\BankTransfer::where('agent_id', $agentId)->where('status', 'pending')->count();
+        $rejectedBankTransfers = \App\Models\BankTransfer::where('agent_id', $agentId)->where('status', 'rejected')->count();
+        $totalBankTransferAmount = \App\Models\BankTransfer::where('agent_id', $agentId)->where('status', 'approved')->sum('amount') ?? 0;
+
+        // Reward pass statistics
+        $totalRewardPasses = \App\Models\RewardPass::where('agent_id', $agentId)->count();
+        $approvedRewardPasses = \App\Models\RewardPass::where('agent_id', $agentId)->where('status', 'approved')->count();
+        $pendingRewardPasses = \App\Models\RewardPass::where('agent_id', $agentId)->where('status', 'pending')->count();
+        $rejectedRewardPasses = \App\Models\RewardPass::where('agent_id', $agentId)->where('status', 'rejected')->count();
+
+        // Monthly statistics (current month)
+        $currentMonth = Carbon::now();
+        $thisMonthShops = Shop::where('agent_id', $agentId)
+                             ->whereMonth('created_at', $currentMonth->month)
+                             ->whereYear('created_at', $currentMonth->year)
+                             ->count();
+        
+        $thisMonthBankTransfers = \App\Models\BankTransfer::where('agent_id', $agentId)
+                                                        ->whereMonth('created_at', $currentMonth->month)
+                                                        ->whereYear('created_at', $currentMonth->year)
+                                                        ->count();
+
+        $thisMonthBankTransferAmount = \App\Models\BankTransfer::where('agent_id', $agentId)
+                                                             ->where('status', 'approved')
+                                                             ->whereMonth('updated_at', $currentMonth->month)
+                                                             ->whereYear('updated_at', $currentMonth->year)
+                                                             ->sum('amount') ?? 0;
+
+        $thisMonthRewardPasses = \App\Models\RewardPass::where('agent_id', $agentId)
+                                                      ->whereMonth('created_at', $currentMonth->month)
+                                                      ->whereYear('created_at', $currentMonth->year)
+                                                      ->count();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'agent_info' => [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                    'leader' => $request->user()->parent ? [
+                        'id' => $request->user()->parent->id,
+                        'name' => $request->user()->parent->name
+                    ] : null
+                ],
+                'shop_onboarding' => [
+                    'total' => $totalShops,
+                    'approved' => $approvedShops,
+                    'pending' => $pendingShops,
+                    'rejected' => $rejectedShops,
+                    'this_month' => $thisMonthShops
+                ],
+                'bank_transfers' => [
+                    'total' => $totalBankTransfers,
+                    'approved' => $approvedBankTransfers,
+                    'pending' => $pendingBankTransfers,
+                    'rejected' => $rejectedBankTransfers,
+                    'total_amount' => $totalBankTransferAmount,
+                    'this_month' => $thisMonthBankTransfers,
+                    'this_month_amount' => $thisMonthBankTransferAmount
+                ],
+                'reward_passes' => [
+                    'total' => $totalRewardPasses,
+                    'approved' => $approvedRewardPasses,
+                    'pending' => $pendingRewardPasses,
+                    'rejected' => $rejectedRewardPasses,
+                    'this_month' => $thisMonthRewardPasses
+                ],
+                'summary' => [
+                    'total_activities' => $totalShops + $totalBankTransfers + $totalRewardPasses,
+                    'total_approved' => $approvedShops + $approvedBankTransfers + $approvedRewardPasses,
+                    'total_pending' => $pendingShops + $pendingBankTransfers + $pendingRewardPasses,
+                    'total_rejected' => $rejectedShops + $rejectedBankTransfers + $rejectedRewardPasses,
+                    'success_rate' => $totalShops + $totalBankTransfers + $totalRewardPasses > 0 
+                        ? round((($approvedShops + $approvedBankTransfers + $approvedRewardPasses) / ($totalShops + $totalBankTransfers + $totalRewardPasses)) * 100, 2) 
+                        : 0
+                ]
+            ]
+        ]);
+    }
+
+    /**
+     * Get leader statistics - aggregated data from all assigned agents
+     */
+    public function getLeaderStatistics(Request $request)
+    {
+        // Only leaders can view their team statistics
+        if ($request->user()->role !== 'leader') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only leaders can view team statistics'
+            ], 403);
+        }
+
+        $leaderId = $request->user()->id;
+        
+        // Get all agents under this leader
+        $agentIds = $request->user()->agents()->pluck('id');
+        $totalAgents = $agentIds->count();
+
+        if ($totalAgents === 0) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'leader_info' => [
+                        'id' => $request->user()->id,
+                        'name' => $request->user()->name,
+                        'email' => $request->user()->email,
+                        'total_agents' => 0
+                    ],
+                    'shop_onboarding' => [
+                        'total' => 0,
+                        'approved' => 0,
+                        'pending' => 0,
+                        'rejected' => 0,
+                        'this_month' => 0
+                    ],
+                    'bank_transfers' => [
+                        'total' => 0,
+                        'approved' => 0,
+                        'pending' => 0,
+                        'rejected' => 0,
+                        'total_amount' => 0,
+                        'this_month' => 0,
+                        'this_month_amount' => 0
+                    ],
+                    'reward_passes' => [
+                        'total' => 0,
+                        'approved' => 0,
+                        'pending' => 0,
+                        'rejected' => 0,
+                        'this_month' => 0
+                    ],
+                    'summary' => [
+                        'total_activities' => 0,
+                        'total_approved' => 0,
+                        'total_pending' => 0,
+                        'total_rejected' => 0,
+                        'success_rate' => 0
+                    ],
+                    'agent_performance' => []
+                ]
+            ]);
+        }
+
+        // Shop onboarding statistics for all agents
+        $totalShops = Shop::whereIn('agent_id', $agentIds)->count();
+        $approvedShops = Shop::whereIn('agent_id', $agentIds)->where('status', 'approved')->count();
+        $pendingShops = Shop::whereIn('agent_id', $agentIds)->where('status', 'pending')->count();
+        $rejectedShops = Shop::whereIn('agent_id', $agentIds)->where('status', 'rejected')->count();
+
+        // Bank transfer statistics for all agents
+        $totalBankTransfers = \App\Models\BankTransfer::whereIn('agent_id', $agentIds)->count();
+        $approvedBankTransfers = \App\Models\BankTransfer::whereIn('agent_id', $agentIds)->where('status', 'approved')->count();
+        $pendingBankTransfers = \App\Models\BankTransfer::whereIn('agent_id', $agentIds)->where('status', 'pending')->count();
+        $rejectedBankTransfers = \App\Models\BankTransfer::whereIn('agent_id', $agentIds)->where('status', 'rejected')->count();
+        $totalBankTransferAmount = \App\Models\BankTransfer::whereIn('agent_id', $agentIds)->where('status', 'approved')->sum('amount') ?? 0;
+
+        // Reward pass statistics for all agents
+        $totalRewardPasses = \App\Models\RewardPass::whereIn('agent_id', $agentIds)->count();
+        $approvedRewardPasses = \App\Models\RewardPass::whereIn('agent_id', $agentIds)->where('status', 'approved')->count();
+        $pendingRewardPasses = \App\Models\RewardPass::whereIn('agent_id', $agentIds)->where('status', 'pending')->count();
+        $rejectedRewardPasses = \App\Models\RewardPass::whereIn('agent_id', $agentIds)->where('status', 'rejected')->count();
+
+        // Monthly statistics (current month)
+        $currentMonth = Carbon::now();
+        $thisMonthShops = Shop::whereIn('agent_id', $agentIds)
+                             ->whereMonth('created_at', $currentMonth->month)
+                             ->whereYear('created_at', $currentMonth->year)
+                             ->count();
+        
+        $thisMonthBankTransfers = \App\Models\BankTransfer::whereIn('agent_id', $agentIds)
+                                                        ->whereMonth('created_at', $currentMonth->month)
+                                                        ->whereYear('created_at', $currentMonth->year)
+                                                        ->count();
+
+        $thisMonthBankTransferAmount = \App\Models\BankTransfer::whereIn('agent_id', $agentIds)
+                                                             ->where('status', 'approved')
+                                                             ->whereMonth('updated_at', $currentMonth->month)
+                                                             ->whereYear('updated_at', $currentMonth->year)
+                                                             ->sum('amount') ?? 0;
+
+        $thisMonthRewardPasses = \App\Models\RewardPass::whereIn('agent_id', $agentIds)
+                                                      ->whereMonth('created_at', $currentMonth->month)
+                                                      ->whereYear('created_at', $currentMonth->year)
+                                                      ->count();
+
+        // Individual agent performance
+        $agentPerformance = [];
+        foreach ($agentIds as $agentId) {
+            $agent = User::find($agentId);
+            
+            $agentShops = Shop::where('agent_id', $agentId)->count();
+            $agentApprovedShops = Shop::where('agent_id', $agentId)->where('status', 'approved')->count();
+            
+            $agentBankTransfers = \App\Models\BankTransfer::where('agent_id', $agentId)->count();
+            $agentApprovedBankTransfers = \App\Models\BankTransfer::where('agent_id', $agentId)->where('status', 'approved')->count();
+            $agentBankTransferAmount = \App\Models\BankTransfer::where('agent_id', $agentId)->where('status', 'approved')->sum('amount') ?? 0;
+            
+            $agentRewardPasses = \App\Models\RewardPass::where('agent_id', $agentId)->count();
+            $agentApprovedRewardPasses = \App\Models\RewardPass::where('agent_id', $agentId)->where('status', 'approved')->count();
+
+            $totalActivities = $agentShops + $agentBankTransfers + $agentRewardPasses;
+            $totalApproved = $agentApprovedShops + $agentApprovedBankTransfers + $agentApprovedRewardPasses;
+
+            $agentPerformance[] = [
+                'agent_id' => $agentId,
+                'agent_name' => $agent->name,
+                'shops' => [
+                    'total' => $agentShops,
+                    'approved' => $agentApprovedShops
+                ],
+                'bank_transfers' => [
+                    'total' => $agentBankTransfers,
+                    'approved' => $agentApprovedBankTransfers,
+                    'amount' => $agentBankTransferAmount
+                ],
+                'reward_passes' => [
+                    'total' => $agentRewardPasses,
+                    'approved' => $agentApprovedRewardPasses
+                ],
+                'total_activities' => $totalActivities,
+                'total_approved' => $totalApproved,
+                'success_rate' => $totalActivities > 0 ? round(($totalApproved / $totalActivities) * 100, 2) : 0
+            ];
+        }
+
+        // Sort agents by total activities (most active first)
+        usort($agentPerformance, function($a, $b) {
+            return $b['total_activities'] <=> $a['total_activities'];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'leader_info' => [
+                    'id' => $request->user()->id,
+                    'name' => $request->user()->name,
+                    'email' => $request->user()->email,
+                    'total_agents' => $totalAgents
+                ],
+                'shop_onboarding' => [
+                    'total' => $totalShops,
+                    'approved' => $approvedShops,
+                    'pending' => $pendingShops,
+                    'rejected' => $rejectedShops,
+                    'this_month' => $thisMonthShops
+                ],
+                'bank_transfers' => [
+                    'total' => $totalBankTransfers,
+                    'approved' => $approvedBankTransfers,
+                    'pending' => $pendingBankTransfers,
+                    'rejected' => $rejectedBankTransfers,
+                    'total_amount' => $totalBankTransferAmount,
+                    'this_month' => $thisMonthBankTransfers,
+                    'this_month_amount' => $thisMonthBankTransferAmount
+                ],
+                'reward_passes' => [
+                    'total' => $totalRewardPasses,
+                    'approved' => $approvedRewardPasses,
+                    'pending' => $pendingRewardPasses,
+                    'rejected' => $rejectedRewardPasses,
+                    'this_month' => $thisMonthRewardPasses
+                ],
+                'summary' => [
+                    'total_activities' => $totalShops + $totalBankTransfers + $totalRewardPasses,
+                    'total_approved' => $approvedShops + $approvedBankTransfers + $approvedRewardPasses,
+                    'total_pending' => $pendingShops + $pendingBankTransfers + $pendingRewardPasses,
+                    'total_rejected' => $rejectedShops + $rejectedBankTransfers + $rejectedRewardPasses,
+                    'success_rate' => ($totalShops + $totalBankTransfers + $totalRewardPasses) > 0 
+                        ? round((($approvedShops + $approvedBankTransfers + $approvedRewardPasses) / ($totalShops + $totalBankTransfers + $totalRewardPasses)) * 100, 2) 
+                        : 0
+                ],
+                'agent_performance' => $agentPerformance
+            ]
         ]);
     }
 }

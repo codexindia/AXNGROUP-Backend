@@ -41,22 +41,12 @@ class RelationshipService
     }
 
     /**
-     * Get all bank transfers for a specific shop
-     */
-    public function getBankTransfersByShop(int $shopId): Collection
-    {
-        return BankTransfer::where('shop_id', $shopId)
-                          ->with(['agent.parent', 'shop'])
-                          ->get();
-    }
-
-    /**
      * Get all bank transfers by a specific agent
      */
     public function getBankTransfersByAgent(int $agentId): Collection
     {
         return BankTransfer::where('agent_id', $agentId)
-                          ->with(['shop'])
+                          ->with(['agent.parent'])
                           ->get();
     }
 
@@ -71,7 +61,7 @@ class RelationshipService
                        ->pluck('id');
 
         return BankTransfer::whereIn('agent_id', $agentIds)
-                          ->with(['agent', 'shop'])
+                          ->with(['agent'])
                           ->get();
     }
 

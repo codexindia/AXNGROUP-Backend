@@ -67,30 +67,7 @@ class RelationshipController extends Controller
     }
 
     /**
-     * Get all bank transfers for a specific shop
-     */
-    public function getShopBankTransfers(int $shopId): JsonResponse
-    {
-        try {
-            $transfers = $this->relationshipService->getBankTransfersByShop($shopId);
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Shop bank transfers retrieved successfully',
-                'data' => $transfers,
-                'total' => $transfers->count(),
-                'total_amount' => $transfers->sum('amount')
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error retrieving bank transfers: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Get all bank transfers by agent with shop information
+     * Get all bank transfers by agent
      */
     public function getAgentBankTransfers(int $agentId): JsonResponse
     {

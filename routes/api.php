@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\Shop\ShopController;
 use App\Http\Controllers\Api\BankTransfer\BankTransferController;
 use App\Http\Controllers\Api\Profile\ProfileController;
 use App\Http\Controllers\Api\Kyc\KycController;
+use App\Http\Controllers\Api\RewardPass\RewardPassController;
 use App\Http\Controllers\Api\RelationshipController;
 use App\Http\Controllers\Api\HierarchyController;
 use App\Http\Controllers\Api\TestController;
@@ -67,6 +68,12 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::put('/admin/{id}/approval', [ShopController::class, 'adminApproval']);
         });
     });
+
+    // Statistics Module
+    Route::prefix('statistics')->group(function () {
+        Route::middleware('role:agent')->get('/agent', [ShopController::class, 'getAgentStatistics']); // Agent statistics
+        Route::middleware('role:leader')->get('/leader', [ShopController::class, 'getLeaderStatistics']); // Leader team statistics
+    });
     
     // Bank Transfer Module
     Route::prefix('bank-transfers')->group(function () {
@@ -79,6 +86,21 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::middleware('role:admin')->group(function () {
             Route::get('/admin/pending', [BankTransferController::class, 'getPendingForAdmin']);
             Route::put('/admin/{id}/approval', [BankTransferController::class, 'adminApproval']);
+        });
+    });
+    
+    // Reward Pass Module
+    Route::prefix('reward-passes')->group(function () {
+        Route::middleware('role:agent')->post('/', [RewardPassController::class, 'create']); // Agent only
+        Route::middleware('role:agent')->get('/agent', [RewardPassController::class, 'getByAgent']); // Agent only
+        Route::middleware('role:leader')->get('/leader', [RewardPassController::class, 'getByLeader']); // Leader view only
+        Route::get('/{id}', [RewardPassController::class, 'show']);
+        
+        // Admin Routes
+        Route::middleware('role:admin')->group(function () {
+            Route::get('/admin/all', [RewardPassController::class, 'getAllRewardPasses']);
+            Route::get('/admin/pending', [RewardPassController::class, 'getPendingForAdmin']);
+            Route::put('/admin/{id}/approval', [RewardPassController::class, 'adminApproval']);
         });
     });
     
@@ -107,11 +129,10 @@ Route::middleware('auth:sanctum')->group(function () {
         });
     });
     
-    // Relationship Module - For tracking Leader-Agent-Shop relationships
+    // Relationship Module - For tracking Leader-Agent relationships
     Route::prefix('relationships')->group(function () {
         Route::middleware('role:leader,admin')->get('/leader/{leaderId}/agents', [RelationshipController::class, 'getAgentsUnderLeader']);
         Route::middleware('role:leader,admin')->get('/leader/{leaderId}/hierarchy', [RelationshipController::class, 'getLeaderHierarchy']);
-        Route::middleware('role:agent,leader,admin')->get('/shop/{shopId}/bank-transfers', [RelationshipController::class, 'getShopBankTransfers']);
         Route::middleware('role:agent,leader,admin')->get('/agent/{agentId}/bank-transfers', [RelationshipController::class, 'getAgentBankTransfers']);
         Route::middleware('role:leader,admin')->get('/check-relation/{agentId}/{leaderId}', [RelationshipController::class, 'checkAgentLeaderRelation']);
     });

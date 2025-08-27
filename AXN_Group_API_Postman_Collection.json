@@ -863,7 +863,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"shop_id\": \"{{shop_id}}\",\n    \"customer_name\": \"Customer Name\",\n    \"customer_mobile\": \"9876543210\",\n    \"amount\": 150000.00\n}"
+							"raw": "{\n    \"customer_name\": \"Customer Name\",\n    \"customer_mobile\": \"9876543210\",\n    \"shop_name\": \"ABC Store\",\n    \"amount\": 150000.00\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/bank-transfers",
@@ -1038,6 +1038,436 @@
 							"_postman_previewlanguage": "json",
 							"header": [{"key": "Content-Type", "value": "application/json"}],
 							"body": "{\n    \"success\": true,\n    \"message\": \"Bank transfer approval updated successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"agent_id\": 3,\n        \"shop_id\": 1,\n        \"customer_name\": \"Customer Name\",\n        \"customer_mobile\": \"9876543210\",\n        \"amount\": \"150000.00\",\n        \"status\": \"approved\",\n        \"amount_change_remark\": \"Amount verified and approved\",\n        \"reject_remark\": null,\n        \"created_at\": \"2025-08-17T10:00:00.000000Z\",\n        \"updated_at\": \"2025-08-17T10:30:00.000000Z\",\n        \"agent\": {\n            \"id\": 3,\n            \"name\": \"Sales Agent\",\n            \"mobile\": \"7777777777\",\n            \"parent\": {\n                \"id\": 2,\n                \"name\": \"Team Leader\",\n                \"mobile\": \"8888888888\"\n            }\n        },\n        \"shop\": {\n            \"id\": 1,\n            \"customer_name\": \"Shop Owner\",\n            \"customer_mobile\": \"9876543210\",\n            \"status\": \"approved\"\n        }\n    }\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Reward Pass",
+			"item": [
+				{
+					"name": "Create Reward Pass (Agent Only)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{agent_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"customer_name\": \"John Doe\",\n    \"customer_mobile\": \"9876543210\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reward-passes",
+							"host": ["{{base_url}}"],
+							"path": ["reward-passes"]
+						},
+						"description": "Agent creates a reward pass for a customer. Only requires customer name and mobile number."
+					},
+					"response": [
+						{
+							"name": "Reward Pass Created Successfully",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"customer_name\": \"John Doe\",\n    \"customer_mobile\": \"9876543210\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/reward-passes",
+									"host": ["{{base_url}}"],
+									"path": ["reward-passes"]
+								}
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Reward pass created successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"agent_id\": 3,\n        \"customer_name\": \"John Doe\",\n        \"customer_mobile\": \"9876543210\",\n        \"status\": \"pending\",\n        \"reject_remark\": null,\n        \"created_at\": \"2025-08-27T15:45:00.000000Z\",\n        \"updated_at\": \"2025-08-27T15:45:00.000000Z\",\n        \"agent\": {\n            \"id\": 3,\n            \"name\": \"Sales Agent\"\n        }\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Agent's Reward Passes",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{agent_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reward-passes/agent",
+							"host": ["{{base_url}}"],
+							"path": ["reward-passes", "agent"]
+						},
+						"description": "Get all reward passes created by the current agent."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Leader's Reward Passes",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{leader_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reward-passes/leader",
+							"host": ["{{base_url}}"],
+							"path": ["reward-passes", "leader"]
+						},
+						"description": "Leader views all reward passes created by agents under them."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Reward Pass Details",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reward-passes/1",
+							"host": ["{{base_url}}"],
+							"path": ["reward-passes", "1"]
+						},
+						"description": "Get details of a specific reward pass."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Reward Passes (Admin)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reward-passes/admin/all?status=pending&per_page=20",
+							"host": ["{{base_url}}"],
+							"path": ["reward-passes", "admin", "all"],
+							"query": [
+								{
+									"key": "status",
+									"value": "pending",
+									"description": "Filter by status: pending, approved, rejected"
+								},
+								{
+									"key": "agent_id",
+									"value": "3",
+									"description": "Filter by specific agent ID",
+									"disabled": true
+								},
+								{
+									"key": "leader_id",
+									"value": "2",
+									"description": "Filter by specific leader ID",
+									"disabled": true
+								},
+								{
+									"key": "date_from",
+									"value": "2025-08-01",
+									"description": "Filter from date",
+									"disabled": true
+								},
+								{
+									"key": "date_to",
+									"value": "2025-08-31",
+									"description": "Filter to date",
+									"disabled": true
+								},
+								{
+									"key": "search",
+									"value": "John",
+									"description": "Search by customer name, mobile, or agent name",
+									"disabled": true
+								},
+								{
+									"key": "per_page",
+									"value": "20",
+									"description": "Items per page (1-100)"
+								}
+							]
+						},
+						"description": "Admin views all reward passes with filtering options."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Pending Reward Passes for Admin",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/reward-passes/admin/pending",
+							"host": ["{{base_url}}"],
+							"path": ["reward-passes", "admin", "pending"]
+						},
+						"description": "Get all pending reward passes for admin approval."
+					},
+					"response": []
+				},
+				{
+					"name": "Admin Approval for Reward Pass",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"approved\",\n    \"admin_remark\": \"Customer verified and approved for reward pass\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/reward-passes/admin/1/approval",
+							"host": ["{{base_url}}"],
+							"path": ["reward-passes", "admin", "1", "approval"]
+						},
+						"description": "Admin approves or rejects a reward pass application."
+					},
+					"response": [
+						{
+							"name": "Reward Pass Approved",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"approved\",\n    \"admin_remark\": \"Customer verified\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/reward-passes/admin/1/approval",
+									"host": ["{{base_url}}"],
+									"path": ["reward-passes", "admin", "1", "approval"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Reward pass approved successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"agent_id\": 3,\n        \"customer_name\": \"John Doe\",\n        \"customer_mobile\": \"9876543210\",\n        \"status\": \"approved\",\n        \"reject_remark\": null,\n        \"created_at\": \"2025-08-27T15:45:00.000000Z\",\n        \"updated_at\": \"2025-08-27T16:00:00.000000Z\",\n        \"agent\": {\n            \"id\": 3,\n            \"name\": \"Sales Agent\",\n            \"parent\": {\n                \"id\": 2,\n                \"name\": \"Team Leader\"\n            }\n        }\n    }\n}"
+						},
+						{
+							"name": "Reward Pass Rejected",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"status\": \"rejected\",\n    \"admin_remark\": \"Invalid mobile number provided\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/reward-passes/admin/1/approval",
+									"host": ["{{base_url}}"],
+									"path": ["reward-passes", "admin", "1", "approval"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Reward pass rejected successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"agent_id\": 3,\n        \"customer_name\": \"John Doe\",\n        \"customer_mobile\": \"9876543210\",\n        \"status\": \"rejected\",\n        \"reject_remark\": \"Invalid mobile number provided\",\n        \"created_at\": \"2025-08-27T15:45:00.000000Z\",\n        \"updated_at\": \"2025-08-27T16:00:00.000000Z\",\n        \"agent\": {\n            \"id\": 3,\n            \"name\": \"Sales Agent\",\n            \"parent\": {\n                \"id\": 2,\n                \"name\": \"Team Leader\"\n            }\n        }\n    }\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Statistics",
+			"item": [
+				{
+					"name": "Agent Statistics",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{agent_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/statistics/agent",
+							"host": ["{{base_url}}"],
+							"path": ["api", "statistics", "agent"]
+						},
+						"description": "Get comprehensive statistics for the authenticated agent including shop onboarding, bank transfers, and reward passes with counts by status."
+					},
+					"response": [
+						{
+							"name": "Agent Statistics Success",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/statistics/agent",
+									"host": ["{{base_url}}"],
+									"path": ["api", "statistics", "agent"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"data\": {\n        \"agent_info\": {\n            \"id\": 3,\n            \"name\": \"Sales Agent\",\n            \"email\": \"agent@example.com\",\n            \"leader\": {\n                \"id\": 2,\n                \"name\": \"Team Leader\"\n            }\n        },\n        \"shop_onboarding\": {\n            \"total\": 45,\n            \"approved\": 30,\n            \"pending\": 10,\n            \"rejected\": 5,\n            \"this_month\": 8\n        },\n        \"bank_transfers\": {\n            \"total\": 25,\n            \"approved\": 20,\n            \"pending\": 3,\n            \"rejected\": 2,\n            \"total_amount\": \"750000.00\",\n            \"this_month\": 5,\n            \"this_month_amount\": \"125000.00\"\n        },\n        \"reward_passes\": {\n            \"total\": 15,\n            \"approved\": 12,\n            \"pending\": 2,\n            \"rejected\": 1,\n            \"this_month\": 3\n        },\n        \"summary\": {\n            \"total_activities\": 85,\n            \"total_approved\": 62,\n            \"total_pending\": 15,\n            \"total_rejected\": 8,\n            \"success_rate\": 72.94\n        }\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Leader Team Statistics",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{leader_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/statistics/leader",
+							"host": ["{{base_url}}"],
+							"path": ["api", "statistics", "leader"]
+						},
+						"description": "Get comprehensive team statistics for the authenticated leader including aggregated data from all assigned agents."
+					},
+					"response": [
+						{
+							"name": "Leader Statistics Success",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/statistics/leader",
+									"host": ["{{base_url}}"],
+									"path": ["api", "statistics", "leader"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"success\": true,\n    \"data\": {\n        \"leader_info\": {\n            \"id\": 2,\n            \"name\": \"Team Leader\",\n            \"email\": \"leader@example.com\",\n            \"total_agents\": 5\n        },\n        \"shop_onboarding\": {\n            \"total\": 150,\n            \"approved\": 120,\n            \"pending\": 20,\n            \"rejected\": 10,\n            \"this_month\": 25\n        },\n        \"bank_transfers\": {\n            \"total\": 80,\n            \"approved\": 65,\n            \"pending\": 10,\n            \"rejected\": 5,\n            \"total_amount\": \"2450000.00\",\n            \"this_month\": 15,\n            \"this_month_amount\": \"450000.00\"\n        },\n        \"reward_passes\": {\n            \"total\": 60,\n            \"approved\": 50,\n            \"pending\": 8,\n            \"rejected\": 2,\n            \"this_month\": 12\n        },\n        \"summary\": {\n            \"total_activities\": 290,\n            \"total_approved\": 235,\n            \"total_pending\": 38,\n            \"total_rejected\": 17,\n            \"success_rate\": 81.03\n        },\n        \"agent_performance\": [\n            {\n                \"agent_id\": 3,\n                \"agent_name\": \"Sales Agent\",\n                \"shops\": {\n                    \"total\": 45,\n                    \"approved\": 30\n                },\n                \"bank_transfers\": {\n                    \"total\": 25,\n                    \"approved\": 20,\n                    \"amount\": \"750000.00\"\n                },\n                \"reward_passes\": {\n                    \"total\": 15,\n                    \"approved\": 12\n                },\n                \"total_activities\": 85,\n                \"total_approved\": 62,\n                \"success_rate\": 72.94\n            },\n            {\n                \"agent_id\": 4,\n                \"agent_name\": \"Support Agent\",\n                \"shops\": {\n                    \"total\": 35,\n                    \"approved\": 28\n                },\n                \"bank_transfers\": {\n                    \"total\": 20,\n                    \"approved\": 18,\n                    \"amount\": \"600000.00\"\n                },\n                \"reward_passes\": {\n                    \"total\": 12,\n                    \"approved\": 10\n                },\n                \"total_activities\": 67,\n                \"total_approved\": 56,\n                \"success_rate\": 83.58\n            }\n        ]\n    }\n}"
 						}
 					]
 				}
