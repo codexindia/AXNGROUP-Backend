@@ -12,6 +12,8 @@ use App\Http\Controllers\Api\RewardPass\RewardPassController;
 use App\Http\Controllers\Api\RelationshipController;
 use App\Http\Controllers\Api\HierarchyController;
 use App\Http\Controllers\Api\TestController;
+use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\SettingsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -147,6 +149,23 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Test endpoint for verifying relationships
     Route::get('/test-relationships', [TestController::class, 'testRelationships']);
+    
+    // Admin User Management Routes
+    Route::prefix('admin')->middleware('role:admin')->group(function () {
+        Route::post('/toggle-user-block', [AdminController::class, 'toggleUserBlock']);
+    });
+    
+    // App Settings Routes
+    Route::get('/settings', [SettingsController::class, 'getAppSettings']); // For all authenticated users
+    
+    // Admin Settings Management Routes
+    Route::prefix('admin/settings')->middleware('role:admin')->group(function () {
+        Route::get('/all', [SettingsController::class, 'getAllSettings']);
+        Route::post('/save', [SettingsController::class, 'saveSetting']);
+        Route::post('/save-multiple', [SettingsController::class, 'saveMultipleSettings']);
+        Route::delete('/delete', [SettingsController::class, 'deleteSetting']);
+        Route::post('/toggle', [SettingsController::class, 'toggleSetting']);
+    });
     
 });
 

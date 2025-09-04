@@ -2031,6 +2031,396 @@
 			]
 		},
 		{
+			"name": "Settings",
+			"item": [
+				{
+					"name": "Get App Settings (All Users)",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{auth_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/settings",
+							"host": ["{{base_url}}"],
+							"path": ["settings"]
+						},
+						"description": "Get all active app settings for agents and team leaders. This includes app version, download links, feature flags, and other configuration data."
+					},
+					"response": [
+						{
+							"name": "Get App Settings Success",
+							"originalRequest": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{auth_token}}", "type": "string"}]
+								},
+								"method": "GET",
+								"header": [{"key": "Accept", "value": "application/json"}],
+								"url": {
+									"raw": "{{base_url}}/settings",
+									"host": ["{{base_url}}"],
+									"path": ["settings"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"App settings retrieved successfully\",\n    \"data\": {\n        \"app_version\": {\n            \"value\": \"1.0.0\",\n            \"description\": \"Current version of the mobile application\"\n        },\n        \"app_name\": {\n            \"value\": \"AXN Group\",\n            \"description\": \"Application name\"\n        },\n        \"app_download_link_android\": {\n            \"value\": \"https://play.google.com/store/apps/details?id=com.axngroup\",\n            \"description\": \"Google Play Store download link for Android app\"\n        },\n        \"app_download_link_ios\": {\n            \"value\": \"https://apps.apple.com/app/axngroup\",\n            \"description\": \"App Store download link for iOS app\"\n        },\n        \"force_update\": {\n            \"value\": false,\n            \"description\": \"Whether to force users to update the app\"\n        },\n        \"minimum_version\": {\n            \"value\": \"1.0.0\",\n            \"description\": \"Minimum required version of the app\"\n        },\n        \"maintenance_mode\": {\n            \"value\": false,\n            \"description\": \"Enable/disable maintenance mode for the app\"\n        },\n        \"support_email\": {\n            \"value\": \"support@axngroup.com\",\n            \"description\": \"Support email address\"\n        },\n        \"support_phone\": {\n            \"value\": \"+91-1234567890\",\n            \"description\": \"Support phone number\"\n        },\n        \"max_withdrawal_amount\": {\n            \"value\": 50000,\n            \"description\": \"Maximum withdrawal amount allowed\"\n        },\n        \"min_withdrawal_amount\": {\n            \"value\": 100,\n            \"description\": \"Minimum withdrawal amount required\"\n        },\n        \"app_features\": {\n            \"value\": {\n                \"shop_onboarding\": true,\n                \"bank_transfers\": true,\n                \"reward_passes\": true,\n                \"kyc_verification\": true,\n                \"wallet_management\": true\n            },\n            \"description\": \"Available features in the app\"\n        },\n        \"announcement\": {\n            \"value\": \"Welcome to AXN Group! Start onboarding shops and earn rewards.\",\n            \"description\": \"General announcement message for users\"\n        },\n        \"show_announcement\": {\n            \"value\": true,\n            \"description\": \"Whether to show announcement in the app\"\n        }\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Admin - Get All Settings",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/settings/all?page=1&per_page=20",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "settings", "all"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1",
+									"description": "Page number"
+								},
+								{
+									"key": "per_page",
+									"value": "20",
+									"description": "Items per page (1-100)"
+								}
+							]
+						},
+						"description": "Admin can view all settings with pagination including inactive ones."
+					},
+					"response": []
+				},
+				{
+					"name": "Admin - Save Single Setting",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"key\": \"app_version\",\n    \"value\": \"1.1.0\",\n    \"type\": \"string\",\n    \"description\": \"Updated application version\",\n    \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/settings/save",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "settings", "save"]
+						},
+						"description": "Admin can create or update a single setting. Type can be: string, integer, boolean, json. If type is not provided, it will be auto-detected."
+					},
+					"response": [
+						{
+							"name": "Setting Saved Successfully",
+							"originalRequest": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "POST",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"key\": \"app_version\",\n    \"value\": \"1.1.0\",\n    \"description\": \"Updated application version\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/admin/settings/save",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "settings", "save"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Setting saved successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"key\": \"app_version\",\n        \"value\": \"1.1.0\",\n        \"type\": \"string\",\n        \"description\": \"Updated application version\",\n        \"is_active\": true\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Admin - Save Multiple Settings",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"settings\": [\n        {\n            \"key\": \"app_version\",\n            \"value\": \"1.2.0\",\n            \"type\": \"string\",\n            \"description\": \"Latest app version\",\n            \"is_active\": true\n        },\n        {\n            \"key\": \"force_update\",\n            \"value\": true,\n            \"type\": \"boolean\",\n            \"description\": \"Force users to update to latest version\",\n            \"is_active\": true\n        },\n        {\n            \"key\": \"max_withdrawal_amount\",\n            \"value\": 75000,\n            \"type\": \"integer\",\n            \"description\": \"Increased maximum withdrawal limit\",\n            \"is_active\": true\n        },\n        {\n            \"key\": \"app_features\",\n            \"value\": {\n                \"shop_onboarding\": true,\n                \"bank_transfers\": true,\n                \"reward_passes\": true,\n                \"kyc_verification\": true,\n                \"wallet_management\": true,\n                \"new_feature\": false\n            },\n            \"type\": \"json\",\n            \"description\": \"Updated feature configuration\",\n            \"is_active\": true\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/settings/save-multiple",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "settings", "save-multiple"]
+						},
+						"description": "Admin can create or update multiple settings at once. Useful for batch configuration updates."
+					},
+					"response": []
+				},
+				{
+					"name": "Admin - Toggle Setting Status",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"key\": \"maintenance_mode\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/settings/toggle",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "settings", "toggle"]
+						},
+						"description": "Admin can toggle a setting's active status between true and false. Useful for quickly enabling/disabling features."
+					},
+					"response": [
+						{
+							"name": "Setting Toggled Successfully",
+							"originalRequest": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "POST",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"key\": \"maintenance_mode\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/admin/settings/toggle",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "settings", "toggle"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"Setting has been activated successfully\",\n    \"data\": {\n        \"key\": \"maintenance_mode\",\n        \"is_active\": true\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Admin - Delete Setting",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"key\": \"old_setting_key\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/settings/delete",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "settings", "delete"]
+						},
+						"description": "Admin can permanently delete a setting. Use with caution as this action cannot be undone."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Admin User Management",
+			"item": [
+				{
+					"name": "Toggle User Block/Unblock",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{admin_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_id\": {{user_id}}\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/toggle-user-block",
+							"host": ["{{base_url}}"],
+							"path": ["admin", "toggle-user-block"]
+						},
+						"description": "Admin can toggle user's block status. If user is currently unblocked, they will be blocked and vice versa. Blocked users cannot access the application."
+					},
+					"response": [
+						{
+							"name": "User Blocked Successfully",
+							"originalRequest": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "POST",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"user_id\": 3\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/admin/toggle-user-block",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "toggle-user-block"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"User has been blocked successfully\",\n    \"data\": {\n        \"user_id\": 3,\n        \"name\": \"Sales Agent\",\n        \"email\": \"agent@example.com\",\n        \"is_blocked\": true,\n        \"action\": \"blocked\"\n    }\n}"
+						},
+						{
+							"name": "User Unblocked Successfully",
+							"originalRequest": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]
+								},
+								"method": "POST",
+								"header": [{"key": "Content-Type", "value": "application/json"}],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"user_id\": 3\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/admin/toggle-user-block",
+									"host": ["{{base_url}}"],
+									"path": ["admin", "toggle-user-block"]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [{"key": "Content-Type", "value": "application/json"}],
+							"body": "{\n    \"success\": true,\n    \"message\": \"User has been unblocked successfully\",\n    \"data\": {\n        \"user_id\": 3,\n        \"name\": \"Sales Agent\",\n        \"email\": \"agent@example.com\",\n        \"is_blocked\": false,\n        \"action\": \"unblocked\"\n    }\n}"
+						}
+					]
+				}
+			]
+		},
+		{
 			"name": "Admin Dashboard",
 			"item": [
 				{
