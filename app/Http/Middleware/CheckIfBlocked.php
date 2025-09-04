@@ -30,7 +30,7 @@ class CheckIfBlocked
 
         if ($user->is_blocked) {
             // Log the user out if they're blocked
-            auth()->logout();
+           // auth()->logout();
             
             return response()->json([
                 'success' => false,

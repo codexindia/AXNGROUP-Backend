@@ -41,8 +41,8 @@ Route::prefix('auth')->group(function () {
     });
 });
 
-// Protected Routes (Require Authentication)
-Route::middleware('auth:sanctum')->group(function () {
+// Protected Routes (Require Authentication and Block Check)
+Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
     
     // Wallet Module
     Route::prefix('wallet')->group(function () {
