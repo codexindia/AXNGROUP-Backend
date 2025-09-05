@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "axn-group-api-collection",
-		"name": "AXN Group API Collection - Updated",
+		"name": "AXN Group API Collection",
 		"description": "Complete API collection for AXN Group MLM system with role-based authentication and approval workflows. Status values: pending → approved/rejected.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
