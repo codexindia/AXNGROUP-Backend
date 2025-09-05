@@ -14,6 +14,7 @@ class KycVerification extends Model
         'user_id',
         'aadhar_number',
         'aadhar_photo',
+        'aadhar_back_photo',
         'pan_number',
         'pan_photo',
         'bank_account_number',
@@ -37,6 +38,7 @@ class KycVerification extends Model
 
     protected $appends = [
         'aadhar_photo_url',
+        'aadhar_back_photo_url',
         'pan_photo_url',
         'passbook_photo_url',
         'profile_photo_url',
@@ -56,6 +58,11 @@ class KycVerification extends Model
     public function getAadharPhotoUrlAttribute()
     {
         return $this->aadhar_photo ? url('storage/' . $this->aadhar_photo) : null;
+    }
+
+    public function getAadharBackPhotoUrlAttribute()
+    {
+        return $this->aadhar_back_photo ? url('storage/' . $this->aadhar_back_photo) : null;
     }
 
     public function getPanPhotoUrlAttribute()
@@ -108,6 +115,7 @@ class KycVerification extends Model
         return [
             'aadhar_number' => 'required|string|size:12|regex:/^[0-9]{12}$/',
             'aadhar_photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'aadhar_back_photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
             'pan_number' => 'required|string|size:10|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
             'pan_photo' => 'required|image|mimes:jpeg,png,jpg|max:2048',
             'bank_account_number' => 'required|string|min:9|max:20',
@@ -126,6 +134,7 @@ class KycVerification extends Model
         return [
             'aadhar_number' => 'sometimes|string|size:12|regex:/^[0-9]{12}$/',
             'aadhar_photo' => 'sometimes|image|mimes:jpeg,png,jpg|max:2048',
+            'aadhar_back_photo' => 'sometimes|image|mimes:jpeg,png,jpg|max:2048',
             'pan_number' => 'sometimes|string|size:10|regex:/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/',
             'pan_photo' => 'sometimes|image|mimes:jpeg,png,jpg|max:2048',
             'bank_account_number' => 'sometimes|string|min:9|max:20',

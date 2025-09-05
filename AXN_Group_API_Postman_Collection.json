@@ -1693,7 +1693,13 @@
 								},
 								{
 									"key": "aadhar_photo",
-									"description": "Aadhaar card photo (JPEG/PNG, max 2MB)",
+									"description": "Aadhaar card front photo (JPEG/PNG, max 2MB)",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "aadhar_back_photo",
+									"description": "Aadhaar card back photo (JPEG/PNG, max 2MB)",
 									"type": "file",
 									"src": []
 								},
@@ -1758,7 +1764,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["kyc", "submit"]
 						},
-						"description": "Agents and Leaders can submit their KYC documents for verification. All fields are mandatory including photos for Aadhaar, PAN, passbook and profile."
+						"description": "Agents and Leaders can submit their KYC documents for verification. All fields are mandatory including photos for Aadhaar front and back, PAN, passbook and profile."
 					},
 					"response": [
 						{

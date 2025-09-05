@@ -58,6 +58,7 @@ class KycController extends Controller
 
             // Store uploaded files
             $aadharPhoto = $this->storeFile($request->file('aadhar_photo'), 'kyc/aadhar');
+            $aadharBackPhoto = $this->storeFile($request->file('aadhar_back_photo'), 'kyc/aadhar');
             $panPhoto = $this->storeFile($request->file('pan_photo'), 'kyc/pan');
             $passbookPhoto = $this->storeFile($request->file('passbook_photo'), 'kyc/passbook');
             $profilePhoto = $this->storeFile($request->file('profile_photo'), 'kyc/profile');
@@ -67,6 +68,7 @@ class KycController extends Controller
                 'user_id' => $request->user()->id,
                 'aadhar_number' => $request->aadhar_number,
                 'aadhar_photo' => $aadharPhoto,
+                'aadhar_back_photo' => $aadharBackPhoto,
                 'pan_number' => strtoupper($request->pan_number),
                 'pan_photo' => $panPhoto,
                 'bank_account_number' => $request->bank_account_number,
@@ -104,6 +106,7 @@ class KycController extends Controller
             // Clean up uploaded files on error
             Storage::disk('public')->delete([
                 $aadharPhoto ?? '',
+                $aadharBackPhoto ?? '',
                 $panPhoto ?? '',
                 $passbookPhoto ?? '',
                 $profilePhoto ?? ''
@@ -359,6 +362,7 @@ class KycController extends Controller
     {
         $files = [
             $kyc->aadhar_photo,
+            $kyc->aadhar_back_photo,
             $kyc->pan_photo,
             $kyc->passbook_photo,
             $kyc->profile_photo
