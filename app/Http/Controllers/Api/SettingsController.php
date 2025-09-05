@@ -10,11 +10,7 @@ use Illuminate\Validation\Rule;
 
 class SettingsController extends Controller
 {
-    /**
-     * Get all app settings (for agents and team leaders)
-     *
-     * @return JsonResponse
-     */
+  
     public function getAppSettings(): JsonResponse
     {
         $settings = AppSetting::where('is_active', true)
@@ -22,10 +18,10 @@ class SettingsController extends Controller
             ->get()
             ->keyBy('key')
             ->map(function ($setting) {
-                return [
-                    'value' => $setting->parsed_value,
-                    'description' => $setting->description
-                ];
+            return [
+                'value' => $setting->parsed_value ?? $setting->value,
+                'description' => $setting->description
+            ];
             });
 
         return response()->json([

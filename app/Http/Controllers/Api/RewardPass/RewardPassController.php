@@ -35,6 +35,20 @@ class RewardPassController extends Controller
             ], 403);
         }
 
+        // Check if reward pass already exists for this customer mobile in current month
+        $currentMonth = Carbon::now()->format('Y-m');
+        $existingRewardPass = RewardPass::where('agent_id', $request->user()->id)
+            ->where('customer_mobile', $request->customer_mobile)
+            ->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$currentMonth])
+            ->first();
+
+        if ($existingRewardPass) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Reward pass for this customer mobile has already been created this month'
+            ], 409);
+        }
+
         $rewardPass = RewardPass::create([
             'agent_id' => $request->user()->id,
             'customer_name' => $request->customer_name,

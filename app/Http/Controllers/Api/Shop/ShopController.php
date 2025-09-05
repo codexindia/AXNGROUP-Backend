@@ -18,7 +18,7 @@ class ShopController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'customer_name' => 'required|string|max:255',
-            'customer_mobile' => 'required|string|max:15'
+            'customer_mobile' => 'required|string|max:15|unique:shops,customer_mobile'
         ]);
 
         if ($validator->fails()) {
