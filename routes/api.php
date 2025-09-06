@@ -153,6 +153,7 @@ Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
     // Admin User Management Routes
     Route::prefix('admin')->middleware('role:admin')->group(function () {
         Route::post('/toggle-user-block', [AdminController::class, 'toggleUserBlock']);
+        Route::get('/users', [AdminController::class, 'getUsersList']);
     });
     
     // App Settings Routes

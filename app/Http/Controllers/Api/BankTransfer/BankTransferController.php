@@ -240,10 +240,23 @@ class BankTransferController extends Controller
      */
     public function getPendingForAdmin()
     {
+        //by date filter
+        //if request has start_date and end_date query parameters, filter by those dates
+        
+        $startDate = request()->query('start_date');
+        $endDate = request()->query('end_date');
+
         $bankTransfers = BankTransfer::where('status', 'pending') // Direct pending, no leader approval needed
                                    ->with(['agent.parent'])
-                                   ->orderBy('created_at', 'asc')
-                                   ->paginate(20);
+                                   ->orderBy('created_at', 'asc');
+
+        // Apply date filters if provided
+        if ($startDate) {
+            $bankTransfers->where('created_at', '>=', $startDate);
+        }
+        if ($endDate) {
+            $bankTransfers->where('created_at', '<=', $endDate);
+        }
 
         return response()->json([
             'success' => true,
