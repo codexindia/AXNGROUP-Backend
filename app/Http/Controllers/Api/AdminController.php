@@ -128,7 +128,7 @@ class AdminController extends Controller
         }
 
         // Select fields and relationships
-        $query->select(['id', 'unique_id', 'name', 'email', 'mobile', 'role', 'is_blocked', 'created_at'])
+        $query->select(['id', 'unique_id', 'name', 'email', 'mobile', 'role', 'parent_id', 'is_blocked', 'created_at'])
               ->with(['parent:id,name,unique_id']);
 
         // Add agent count for leaders
