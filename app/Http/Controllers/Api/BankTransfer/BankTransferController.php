@@ -38,30 +38,30 @@ class BankTransferController extends Controller
         // Check daily limit (max 1 lakh per day)
         $dailyLimit = 100000; // 1 lakh
         $today = now()->format('Y-m-d');
-        $todayTotal = BankTransfer::where('agent_id', $request->user()->id)
+        $todayTotal = BankTransfer::where('customer_mobile', $request->customer_mobile)
             ->where('status', '!=', 'rejected')
             ->whereDate('created_at', $today)
             ->sum('amount');
 
         if (($todayTotal + $request->amount) > $dailyLimit) {
             return response()->json([
-                'success' => false,
-                'message' => 'Daily limit exceeded. Maximum ₹1,00,000 per day allowed. Current today total: ₹' . number_format($todayTotal)
+            'success' => false,
+            'message' => 'Daily limit exceeded. Maximum ₹1,00,000 per day allowed. Current today total: ₹' . number_format($todayTotal)
             ], 429);
         }
 
         // Check monthly limit (max 2 lakh per month)
         $monthlyLimit = 200000; // 2 lakh
         $currentMonth = now()->format('Y-m');
-        $monthlyTotal = BankTransfer::where('agent_id', $request->user()->id)
+        $monthlyTotal = BankTransfer::where('customer_mobile', $request->customer_mobile)
             ->where('status', '!=', 'rejected')
             ->whereRaw("DATE_FORMAT(created_at, '%Y-%m') = ?", [$currentMonth])
             ->sum('amount');
 
         if (($monthlyTotal + $request->amount) > $monthlyLimit) {
             return response()->json([
-                'success' => false,
-                'message' => 'Monthly limit exceeded. Maximum ₹2,00,000 per month allowed. Current month total: ₹' . number_format($monthlyTotal)
+            'success' => false,
+            'message' => 'Monthly limit exceeded. Maximum ₹2,00,000 per month allowed. Current month total: ₹' . number_format($monthlyTotal)
             ], 429);
         }
 
