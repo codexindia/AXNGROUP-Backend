@@ -16,7 +16,7 @@ class BankTransferController extends Controller
             'customer_name' => 'required|string|max:255',
             'customer_mobile' => 'required|string|max:15',
             'shop_name' => 'nullable|string|max:255',
-            'amount' => 'required|numeric|min:1'
+            'amount' => 'required|numeric|min:500'
         ]);
 
         if ($validator->fails()) {
