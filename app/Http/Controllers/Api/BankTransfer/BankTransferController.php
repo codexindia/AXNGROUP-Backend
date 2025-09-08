@@ -272,8 +272,8 @@ class BankTransferController extends Controller
                                            ->first();
             
             $totalActualAmount = $monthlyData ? $monthlyData->total_bank_transfer : 0;
-            
-            $rows = $transfers->map(function ($transfer) use ($totalActualAmount, $transfers) {
+            $dailyActualAmount = 0;
+            $rows = $transfers->map(function ($transfer) use ($totalActualAmount, $transfers, &$dailyActualAmount) {
                 // Get individual actual amount from daily sheet_data table
                 $transferDate = $transfer->created_at->format('Y-m-d');
                 $dailySheetData = SheetData::where('cus_no', $transfer->customer_mobile)
@@ -281,7 +281,8 @@ class BankTransferController extends Controller
                                          ->first();
                 
                 $individualActualAmount = $dailySheetData ? $dailySheetData->actual_bt_tide : 0;
-                
+                $dailyActualAmount += $individualActualAmount;
+
                 return [
                     'id' => $transfer->id,
                     'name' => $transfer->customer_name,
@@ -297,6 +298,7 @@ class BankTransferController extends Controller
             return [
                 'mobile_no' => $mobileNo,
                 'total_amount' => $totalAmount,
+                'actual_amount' => $dailyActualAmount,
                 'total_actual_amount' => $totalActualAmount,
                 'rows' => $rows->values()
             ];
