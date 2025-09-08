@@ -147,12 +147,6 @@ class BankTransferController extends Controller
         ]);
     }
 
-    private function creditAgentWallet($bankTransfer)
-    {
-        // This method is now handled by PayoutService in adminApproval
-        // Keeping for backward compatibility but logic moved to admin approval
-    }
-
     /**
      * Admin approval for bank transfer (triggers payout)
      */
@@ -258,9 +252,11 @@ class BankTransferController extends Controller
             $bankTransfers->where('created_at', '<=', $endDate);
         }
 
+        $result = $bankTransfers->paginate(20);
+
         return response()->json([
             'success' => true,
-            'data' => $bankTransfers
+            'data' => $result
         ]);
     }
 }

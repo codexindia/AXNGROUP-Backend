@@ -11,7 +11,6 @@ use App\Http\Controllers\Api\Kyc\KycController;
 use App\Http\Controllers\Api\RewardPass\RewardPassController;
 use App\Http\Controllers\Api\RelationshipController;
 use App\Http\Controllers\Api\HierarchyController;
-use App\Http\Controllers\Api\TestController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\SettingsController;
 
@@ -146,9 +145,6 @@ Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
         Route::middleware('role:agent,leader')->get('/my-parent', [HierarchyController::class, 'getMyParent']);
         Route::middleware('role:admin')->get('/complete', [HierarchyController::class, 'getCompleteHierarchy']);
     });
-    
-    // Test endpoint for verifying relationships
-    Route::get('/test-relationships', [TestController::class, 'testRelationships']);
     
     // Admin User Management Routes
     Route::prefix('admin')->middleware('role:admin')->group(function () {
