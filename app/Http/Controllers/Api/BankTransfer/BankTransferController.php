@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\BankTransfer;
 
 use App\Http\Controllers\Controller;
 use App\Models\BankTransfer;
+use App\Models\MonthlyBtSheetData;
+use App\Models\SheetData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Services\PayoutService;
@@ -155,7 +157,8 @@ class BankTransferController extends Controller
         $validator = Validator::make($request->all(), [
             'status' => 'required|in:approved,rejected',
             'admin_remark' => 'nullable|string',
-            'amount_change_remark' => 'nullable|string'
+            'amount_change_remark' => 'nullable|string',
+            'amount' => 'nullable|numeric|min:500'
         ]);
 
         if ($validator->fails()) {
@@ -196,6 +199,11 @@ class BankTransferController extends Controller
             'amount_change_remark' => $request->amount_change_remark,
             'reject_remark' => $request->status === 'rejected' ? $request->admin_remark : null
         ]);
+        // If amount is changed by admin, update it
+        if ($request->has('amount') && $request->amount != $bankTransfer->amount && $request->amount >= 500) {
+            $bankTransfer->amount = $request->amount;
+            $bankTransfer->save();
+        }
 
         // If admin approved, calculate and credit payout
         if ($request->status === 'approved') {
@@ -230,33 +238,91 @@ class BankTransferController extends Controller
     }
 
     /**
-     * Get pending bank transfers for admin approval
+     * Get pending bank transfers for admin approval (grouped by mobile number)
      */
     public function getPendingForAdmin()
     {
-        //by date filter
-        //if request has start_date and end_date query parameters, filter by those dates
-        
         $startDate = request()->query('start_date');
         $endDate = request()->query('end_date');
 
-        $bankTransfers = BankTransfer::where('status', 'pending') // Direct pending, no leader approval needed
-                                   ->with(['agent.parent'])
-                                   ->orderBy('created_at', 'asc');
+        $query = BankTransfer::where('status', 'pending')
+                        ->with(['agent:id,name,mobile,parent_id', 'agent.parent:id,name,mobile']);
 
         // Apply date filters if provided
         if ($startDate) {
-            $bankTransfers->where('created_at', '>=', $startDate);
+            $query->where('created_at', '>=', $startDate);
         }
         if ($endDate) {
-            $bankTransfers->where('created_at', '<=', $endDate);
+            $query->where('created_at', '<=', $endDate);
         }
 
-        $result = $bankTransfers->paginate(20);
+        $bankTransfers = $query->orderBy('created_at', 'desc')->get();
+
+        // Group by customer mobile number
+        $groupedTransfers = $bankTransfers->groupBy('customer_mobile')->map(function ($transfers, $mobileNo) {
+            $totalAmount = $transfers->sum('amount');
+            
+            // Get actual amount from monthly_bt_sheet_data table for current month
+            $currentMonth = now()->month;
+            $currentYear = now()->year;
+            
+            $monthlyData = MonthlyBtSheetData::where('mobile_no', $mobileNo)
+                                           ->where('year', $currentYear)
+                                           ->where('month', $currentMonth)
+                                           ->first();
+            
+            $totalActualAmount = $monthlyData ? $monthlyData->total_bank_transfer : 0;
+            
+            $rows = $transfers->map(function ($transfer) use ($totalActualAmount, $transfers) {
+                // Get individual actual amount from daily sheet_data table
+                $transferDate = $transfer->created_at->format('Y-m-d');
+                $dailySheetData = SheetData::where('cus_no', $transfer->customer_mobile)
+                                         ->where('date', $transferDate)
+                                         ->first();
+                
+                $individualActualAmount = $dailySheetData ? $dailySheetData->actual_bt_tide : 0;
+                
+                return [
+                    'id' => $transfer->id,
+                    'name' => $transfer->customer_name,
+                    'amount' => $transfer->amount,
+                    'actual_amount' => round($individualActualAmount, 2),
+                    'fse_name' => $transfer->agent->name ?? 'N/A', // FSE = Agent
+                    'tl_name' => $transfer->agent->parent->name ?? 'N/A', // TL = Team Leader
+                    'status' => strtoupper($transfer->status),
+                    'created_at' => $transfer->created_at->format('Y-m-d H:i:s')
+                ];
+            });
+
+            return [
+                'mobile_no' => $mobileNo,
+                'total_amount' => $totalAmount,
+                'total_actual_amount' => $totalActualAmount,
+                'rows' => $rows->values()
+            ];
+        });
+
+        // Convert to indexed array and add pagination-like structure
+        $result = $groupedTransfers->values();
+        
+        // Simple pagination simulation
+        $perPage = request()->query('per_page', 20);
+        $page = request()->query('page', 1);
+        $total = $result->count();
+        $offset = ($page - 1) * $perPage;
+        $paginatedResult = $result->slice($offset, $perPage);
 
         return response()->json([
             'success' => true,
-            'data' => $result
+            'data' => [
+                'current_page' => (int) $page,
+                'data' => $paginatedResult->values(),
+                'total' => $total,
+                'per_page' => (int) $perPage,
+                'last_page' => ceil($total / $perPage),
+                'from' => $offset + 1,
+                'to' => min($offset + $perPage, $total)
+            ]
         ]);
     }
 }

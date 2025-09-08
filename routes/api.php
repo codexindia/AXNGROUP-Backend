@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\RelationshipController;
 use App\Http\Controllers\Api\HierarchyController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\SettingsController;
+use App\Http\Controllers\Api\GoogleSheetsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -162,6 +163,11 @@ Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
         Route::post('/save-multiple', [SettingsController::class, 'saveMultipleSettings']);
         Route::delete('/delete', [SettingsController::class, 'deleteSetting']);
         Route::post('/toggle', [SettingsController::class, 'toggleSetting']);
+    });
+    
+    // Google Sheets Integration Routes
+    Route::prefix('google-sheets')->middleware('role:admin,leader')->group(function () {
+        Route::post('/sync-today', [GoogleSheetsController::class, 'syncTodayData']);
     });
     
 });
