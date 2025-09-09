@@ -54,15 +54,15 @@ class GoogleSheetsController extends Controller
     public function webhookReceiveData(Request $request)
     {
         try {
-            // Log the incoming webhook data for debugging
             Log::info('Google Sheets Webhook Data:', $request->all());
 
+            // Basic validation
             $validator = Validator::make($request->all(), [
                 'sheet_name' => 'required|string|max:100',
                 'data' => 'required|array',
-                'data.*.date' => 'required|string',
-                'data.*.cus_no' => 'required|string',
-                'data.*.actual_bt_tide' => 'nullable|numeric'
+                'row_numbers' => 'nullable|array',
+                'timestamp' => 'nullable|string',
+                'test' => 'nullable|boolean'
             ]);
 
             if ($validator->fails()) {
@@ -75,44 +75,76 @@ class GoogleSheetsController extends Controller
 
             $sheetName = $request->input('sheet_name');
             $data = $request->input('data');
+            $rowNumbers = $request->input('row_numbers', []);
+            $isTest = $request->input('test', false);
             
             $syncedCount = 0;
             $errorCount = 0;
+            $syncedRows = [];
+            $errors = [];
 
-            foreach ($data as $row) {
+            foreach ($data as $index => $row) {
                 try {
-                    // Parse date
-                    $parsedDate = $this->parseDate($row['date']);
-                    if (!$parsedDate) {
-                        $errorCount++;
-                        continue;
-                    }
+                    $rowNumber = $rowNumbers[$index] ?? null;
 
-                    // Handle different sheet types
-                    if (stripos($sheetName, 'bank transfer') !== false || stripos($sheetName, 'bt') !== false) {
-                        // Handle Bank Transfer sheet data
-                        $this->processBankTransferWebhookData($row, $parsedDate);
+                    // Different validation and processing based on sheet type
+                    if (stripos($sheetName, 'bank transfer') !== false) {
+                        // Process Bank Transfer sheet data
+                        $result = $this->processBankTransferWebhookRow($row, $sheetName, $isTest);
                     } else {
-                        // Handle regular sheet data
-                        $this->processRegularWebhookData($row, $parsedDate, $sheetName);
+                        // Process Daily Bank Transfer (regular sheet) data
+                        $result = $this->processRegularWebhookRow($row, $sheetName, $isTest);
                     }
                     
-                    $syncedCount++;
+                    if ($result['success']) {
+                        $syncedCount++;
+                        if ($rowNumber) {
+                            $syncedRows[] = $rowNumber;
+                        }
+                    } else {
+                        $errorCount++;
+                        $errors[] = [
+                            'row' => $rowNumber,
+                            'error' => $result['error']
+                        ];
+                    }
+                    
                 } catch (\Exception $e) {
-                    Log::error('Error processing webhook row:', ['error' => $e->getMessage(), 'row' => $row]);
+                    Log::error('Error processing webhook row:', [
+                        'error' => $e->getMessage(), 
+                        'row' => $row,
+                        'row_number' => $rowNumber ?? 'unknown'
+                    ]);
                     $errorCount++;
+                    $errors[] = [
+                        'row' => $rowNumber ?? 'unknown',
+                        'error' => $e->getMessage()
+                    ];
                 }
             }
 
-            return response()->json([
+            $response = [
                 'success' => true,
                 'message' => 'Webhook data processed successfully',
                 'data' => [
                     'sheet_name' => $sheetName,
                     'synced_records' => $syncedCount,
-                    'error_records' => $errorCount
+                    'error_records' => $errorCount,
+                    'synced_rows' => $syncedRows
                 ]
-            ]);
+            ];
+
+            // Include errors in response if any occurred
+            if (!empty($errors)) {
+                $response['data']['errors'] = $errors;
+            }
+
+            // Log test requests differently
+            if ($isTest) {
+                Log::info('Test webhook request processed', $response);
+            }
+
+            return response()->json($response);
 
         } catch (\Exception $e) {
             Log::error('Webhook processing error:', ['error' => $e->getMessage()]);
@@ -126,12 +158,109 @@ class GoogleSheetsController extends Controller
     }
 
     /**
-     * Process regular sheet data from webhook
+     * Process Bank Transfer sheet row from webhook
+     */
+    private function processBankTransferWebhookRow($row, $sheetName, $isTest = false)
+    {
+        try {
+            // Validate Bank Transfer row data
+            $validator = Validator::make($row, [
+                'date' => 'required|string',
+                'cus_name' => 'required|string|min:1',
+                'mobile_no' => 'required|string|min:10',
+                'total_bank_transfer' => 'nullable|numeric|min:0'
+            ]);
+            
+            if ($validator->fails()) {
+                return [
+                    'success' => false,
+                    'error' => 'Validation failed: ' . implode(', ', $validator->errors()->all())
+                ];
+            }
+
+            // Parse date
+            $parsedDate = $this->parseDate($row['date']);
+            if (!$parsedDate) {
+                return [
+                    'success' => false,
+                    'error' => 'Invalid date format: ' . $row['date']
+                ];
+            }
+
+            // Skip processing for test requests
+            if ($isTest) {
+                Log::info('Test Bank Transfer data validated successfully', $row);
+                return ['success' => true, 'message' => 'Test data validated'];
+            }
+
+            // Process the data
+            $this->processBankTransferWebhookData($row, $parsedDate);
+            
+            return ['success' => true, 'message' => 'Bank Transfer data processed'];
+            
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => 'Processing error: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Process regular sheet (Daily Bank Transfer) row from webhook
+     */
+    private function processRegularWebhookRow($row, $sheetName, $isTest = false)
+    {
+        try {
+            // Validate regular sheet row data
+            $validator = Validator::make($row, [
+                'date' => 'required|string',
+                'cus_no' => 'required|string|min:1',
+                'actual_bt_tide' => 'nullable|numeric'
+            ]);
+            
+            if ($validator->fails()) {
+                return [
+                    'success' => false,
+                    'error' => 'Validation failed: ' . implode(', ', $validator->errors()->all())
+                ];
+            }
+
+            // Parse date
+            $parsedDate = $this->parseDate($row['date']);
+            if (!$parsedDate) {
+                return [
+                    'success' => false,
+                    'error' => 'Invalid date format: ' . $row['date']
+                ];
+            }
+
+            // Skip processing for test requests
+            if ($isTest) {
+                Log::info('Test regular sheet data validated successfully', $row);
+                return ['success' => true, 'message' => 'Test data validated'];
+            }
+
+            // Process the data
+            $this->processRegularWebhookData($row, $parsedDate, $sheetName);
+            
+            return ['success' => true, 'message' => 'Regular sheet data processed'];
+            
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => 'Processing error: ' . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Process regular sheet data from webhook (updated)
      */
     private function processRegularWebhookData($row, $parsedDate, $sheetName)
     {
         $cusNo = $row['cus_no'];
-        $actualBtTide = $row['actual_bt_tide'] ?? null;
+        $actualBtTide = isset($row['actual_bt_tide']) ? (float) $row['actual_bt_tide'] : null;
 
         // Check if record already exists
         $existingRecord = SheetData::where('date', $parsedDate->format('Y-m-d'))
@@ -144,6 +273,11 @@ class GoogleSheetsController extends Controller
             $existingRecord->update([
                 'actual_bt_tide' => $actualBtTide
             ]);
+            Log::info('Updated existing sheet data record', [
+                'date' => $parsedDate->format('Y-m-d'),
+                'cus_no' => $cusNo,
+                'actual_bt_tide' => $actualBtTide
+            ]);
         } else {
             // Create new record
             SheetData::create([
@@ -152,27 +286,31 @@ class GoogleSheetsController extends Controller
                 'actual_bt_tide' => $actualBtTide,
                 'sheet_name' => $sheetName
             ]);
+            Log::info('Created new sheet data record', [
+                'date' => $parsedDate->format('Y-m-d'),
+                'cus_no' => $cusNo,
+                'actual_bt_tide' => $actualBtTide
+            ]);
         }
     }
 
     /**
-     * Process Bank Transfer sheet data from webhook
+     * Process Bank Transfer sheet data from webhook (updated)
      */
     private function processBankTransferWebhookData($row, $parsedDate)
     {
         $year = $parsedDate->year;
         $month = $parsedDate->month;
         
-        // For Bank Transfer sheet, we expect different fields
-        $cusName = $row['cus_name'] ?? '';
-        $mobileNo = $row['mobile_no'] ?? $row['cus_no'] ?? '';
-        $totalBt = $row['total_bank_transfer'] ?? $row['actual_bt_tide'] ?? 0;
+        $cusName = trim($row['cus_name']);
+        $mobileNo = trim($row['mobile_no']);
+        $totalBt = isset($row['total_bank_transfer']) ? (float) $row['total_bank_transfer'] : 0;
 
         if (empty($mobileNo)) {
             throw new \Exception('Mobile number is required for Bank Transfer data');
         }
 
-        // Check if record already exists
+        // Check if record already exists for this month
         $existingRecord = MonthlyBtSheetData::where('mobile_no', $mobileNo)
             ->where('year', $year)
             ->where('month', $month)
@@ -185,6 +323,12 @@ class GoogleSheetsController extends Controller
                 'total_bank_transfer' => $totalBt,
                 'sheet_name' => 'Bank Transfer'
             ]);
+            Log::info('Updated existing monthly BT record', [
+                'mobile_no' => $mobileNo,
+                'year' => $year,
+                'month' => $month,
+                'total_bank_transfer' => $totalBt
+            ]);
         } else {
             // Create new record
             MonthlyBtSheetData::create([
@@ -194,6 +338,12 @@ class GoogleSheetsController extends Controller
                 'year' => $year,
                 'month' => $month,
                 'sheet_name' => 'Bank Transfer'
+            ]);
+            Log::info('Created new monthly BT record', [
+                'mobile_no' => $mobileNo,
+                'year' => $year,
+                'month' => $month,
+                'total_bank_transfer' => $totalBt
             ]);
         }
     }
