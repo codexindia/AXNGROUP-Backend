@@ -169,13 +169,17 @@ Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
         Route::delete('/delete', [SettingsController::class, 'deleteSetting']);
         Route::post('/toggle', [SettingsController::class, 'toggleSetting']);
     });
-    
+    // Google Sheets Integration Routes
+    Route::prefix('google-sheets')->group(function () {
+        Route::post('/sync-today', [GoogleSheetsController::class, 'syncTodayData']);
+     //   Route::post('webhook', [GoogleSheetsController::class, 'webhookReceiveData']); // To manually trigger webhook processing if needed
+    });
    
     
 });
  // Google Sheets Integration Routes
     Route::prefix('google-sheets')->group(function () {
-        Route::post('/sync-today', [GoogleSheetsController::class, 'syncTodayData']);
+      //  Route::post('/sync-today', [GoogleSheetsController::class, 'syncTodayData']);
         Route::post('webhook', [GoogleSheetsController::class, 'webhookReceiveData']); // To manually trigger webhook processing if needed
     });
 // Default route for testing
