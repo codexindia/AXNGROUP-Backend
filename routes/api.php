@@ -26,6 +26,11 @@ use App\Http\Controllers\Api\GoogleSheetsController;
 |
 */
 
+// Google Sheets Webhook (No authentication required)
+Route::prefix('google-sheets')->group(function () {
+    Route::post('/webhook', [GoogleSheetsController::class, 'webhookReceiveData']);
+});
+
 // Auth Routes (No middleware)
 Route::prefix('auth')->group(function () {
     Route::post('login/admin', [AuthController::class, 'loginAdmin']);
@@ -168,6 +173,7 @@ Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
     // Google Sheets Integration Routes
     Route::prefix('google-sheets')->middleware('role:admin,leader')->group(function () {
         Route::post('/sync-today', [GoogleSheetsController::class, 'syncTodayData']);
+        Route::post('webhook', [GoogleSheetsController::class, 'webhookReceiveData']); // To manually trigger webhook processing if needed
     });
     
 });
