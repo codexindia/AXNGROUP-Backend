@@ -170,14 +170,14 @@ Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
         Route::post('/toggle', [SettingsController::class, 'toggleSetting']);
     });
     
-    // Google Sheets Integration Routes
-    Route::prefix('google-sheets')->middleware('role:admin,leader')->group(function () {
+   
+    
+});
+ // Google Sheets Integration Routes
+    Route::prefix('google-sheets')->group(function () {
         Route::post('/sync-today', [GoogleSheetsController::class, 'syncTodayData']);
         Route::post('webhook', [GoogleSheetsController::class, 'webhookReceiveData']); // To manually trigger webhook processing if needed
     });
-    
-});
-
 // Default route for testing
 Route::get('/user', function (Request $request) {
     return $request->user();
