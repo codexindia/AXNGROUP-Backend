@@ -32,7 +32,7 @@ class HierarchyController extends Controller
     }
 
     /**
-     * Get all agents under a leader (simplified)
+     * Get all agents under a leader with necessary details and counts
      */
     public function getAgentsUnderLeader(Request $request): JsonResponse
     {
@@ -43,15 +43,54 @@ class HierarchyController extends Controller
             ], 403);
         }
 
-        $agents = $request->user()->agents()->with(['shops', 'bankTransfers'])->get();
+        $agents = $request->user()->agents()->get();
+
+        $agentsData = $agents->map(function($agent) {
+            // Get today's date
+            $today = now()->format('Y-m-d');
+            $startOfMonth = now()->startOfMonth()->format('Y-m-d');
+            $endOfMonth = now()->endOfMonth()->format('Y-m-d');
+
+            // Daily counts
+            $dailyShops = $agent->shops()->whereDate('created_at', $today)->count();
+            $dailyBankTransfers = $agent->bankTransfers()->whereDate('created_at', $today)->count();
+
+            // Monthly counts
+            $monthlyShops = $agent->shops()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+            $monthlyBankTransfers = $agent->bankTransfers()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+
+            // Total counts
+            $totalShops = $agent->shops()->count();
+            $totalBankTransfers = $agent->bankTransfers()->count();
+
+            return [
+                'id' => $agent->id,
+                'unique_id' => $agent->unique_id,
+                'name' => $agent->name,
+                'mobile' => $agent->mobile,
+                'email' => $agent->email,
+                'is_blocked' => $agent->is_blocked,
+                'created_at' => $agent->created_at,
+                'counts' => [
+                    'shop_onboarding' => [
+                        'daily' => $dailyShops,
+                        'monthly' => $monthlyShops,
+                        'total' => $totalShops
+                    ],
+                    'bank_transfers' => [
+                        'daily' => $dailyBankTransfers,
+                        'monthly' => $monthlyBankTransfers,
+                        'total' => $totalBankTransfers
+                    ]
+                ]
+            ];
+        });
 
         return response()->json([
             'success' => true,
             'message' => 'Agents retrieved successfully',
-            'data' => $agents,
-            'total' => $agents->count(),
-            'total_shops' => $agents->sum(function($agent) { return $agent->shops->count(); }),
-            'total_bank_transfers' => $agents->sum(function($agent) { return $agent->bankTransfers->count(); })
+            'data' => $agentsData,
+           
         ]);
     }
 
