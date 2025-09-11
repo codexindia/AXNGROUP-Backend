@@ -131,13 +131,106 @@ class AdminController extends Controller
         $query->select(['id', 'unique_id', 'name', 'email', 'mobile', 'role', 'parent_id', 'is_blocked', 'created_at'])
               ->with(['parent:id,name,unique_id']);
 
-        // Add agent count for leaders
+        // Add counts for leaders and agents
         if ($request->type === 'leaders') {
-            $query->withCount('agents');
+            $query->withCount('agents'); // Simple agent count for leaders
         }
 
         $users = $query->orderBy('created_at', 'desc')
                       ->paginate($request->get('per_page', 20));
+
+        // Add performance counts after pagination
+        if ($request->type === 'leaders') {
+            // Add team performance counts for leaders
+            $users->getCollection()->transform(function ($leader) {
+                // Get all agent IDs under this leader
+                $agentIds = User::where('parent_id', $leader->id)
+                               ->where('role', 'agent')
+                               ->pluck('id')
+                               ->toArray();
+
+                if (!empty($agentIds)) {
+                    // Count bank transfers for today
+                    $dailyBankTransfers = \App\Models\BankTransfer::whereIn('agent_id', $agentIds)
+                        ->whereDate('created_at', today())
+                        ->sum('amount');
+
+                    // Count bank transfers for this month
+                    $monthlyBankTransfers = \App\Models\BankTransfer::whereIn('agent_id', $agentIds)
+                        ->whereMonth('created_at', now()->month)
+                        ->whereYear('created_at', now()->year)
+                        ->sum('amount');
+
+                    // Count shop onboardings for today
+                    $dailyShopOnboardings = \App\Models\Shop::whereIn('agent_id', $agentIds)
+                        ->whereDate('created_at', today())
+                        ->count();
+
+                    // Count shop onboardings for this month
+                    $monthlyShopOnboardings = \App\Models\Shop::whereIn('agent_id', $agentIds)
+                        ->whereMonth('created_at', now()->month)
+                        ->whereYear('created_at', now()->year)
+                        ->count();
+
+                    // Add counts to leader object
+                    $leader->daily_bank_transfers_count = $dailyBankTransfers;
+                    $leader->monthly_bank_transfers_count = $monthlyBankTransfers;
+                    $leader->daily_shop_onboarding_count = $dailyShopOnboardings;
+                    $leader->monthly_shop_onboarding_count = $monthlyShopOnboardings;
+                } else {
+                    // No agents under this leader
+                    $leader->daily_bank_transfers_count = 0;
+                    $leader->monthly_bank_transfers_count = 0;
+                    $leader->daily_shop_onboarding_count = 0;
+                    $leader->monthly_shop_onboarding_count = 0;
+                }
+
+                return $leader;
+            });
+        } elseif ($request->type === 'agents') {
+            // Add individual performance counts for agents
+            $users->getCollection()->transform(function ($agent) {
+                // Count agent's own bank transfers for today
+                $dailyBankTransfers = \App\Models\BankTransfer::where('agent_id', $agent->id)
+                    ->whereDate('created_at', today())
+                    ->count();
+
+                // Count agent's own bank transfers for this month
+                $monthlyBankTransfers = \App\Models\BankTransfer::where('agent_id', $agent->id)
+                    ->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year)
+                    ->sum('amount');
+
+                // Count agent's own total bank transfers
+                $totalBankTransfers = \App\Models\BankTransfer::where('agent_id', $agent->id)
+                    ->sum('amount');
+
+                // Count agent's own shop onboardings for today
+                $dailyShopOnboardings = \App\Models\Shop::where('agent_id', $agent->id)
+                    ->whereDate('created_at', today())
+                    ->count();
+
+                // Count agent's own shop onboardings for this month
+                $monthlyShopOnboardings = \App\Models\Shop::where('agent_id', $agent->id)
+                    ->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year)
+                    ->count();
+
+                // Count agent's own total shop onboardings
+                $totalShopOnboardings = \App\Models\Shop::where('agent_id', $agent->id)
+                    ->count();
+
+                // Add counts to agent object
+                $agent->daily_bank_transfers_count = $dailyBankTransfers;
+                $agent->monthly_bank_transfers_count = $monthlyBankTransfers;
+                $agent->total_bank_transfers_count = $totalBankTransfers;
+                $agent->daily_shop_onboarding_count = $dailyShopOnboardings;
+                $agent->monthly_shop_onboarding_count = $monthlyShopOnboardings;
+                $agent->total_shop_onboarding_count = $totalShopOnboardings;
+
+                return $agent;
+            });
+        }
 
         // Get statistics based on type
         $stats = [];

@@ -27,4 +27,9 @@ class Shop extends Model
     {
         return $this->agent ? $this->agent->parent : null;
     }
+    public function onboardingSheetData()
+    {
+        return $this->hasOne(OnboardingSheetData::class, 'phone', 'customer_mobile');
+                   
+    }
 }

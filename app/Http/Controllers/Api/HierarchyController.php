@@ -21,7 +21,58 @@ class HierarchyController extends Controller
             ], 403);
         }
 
-        $leaders = $request->user()->leaders()->with('agents')->get();
+        $leaders = $request->user()->leaders()->paginate(10);
+
+        $leadersData = $leaders->getCollection()->map(function($leader) {
+            // Get today's date
+            $today = now()->format('Y-m-d');
+            $startOfMonth = now()->startOfMonth()->format('Y-m-d');
+            $endOfMonth = now()->endOfMonth()->format('Y-m-d');
+
+            $agents = $leader->agents;
+            $totalAgents = $agents->count();
+
+            // Calculate daily counts across all agents
+            $dailyShops = $agents->sum(function($agent) use ($today) {
+            return $agent->shops()->whereDate('created_at', $today)->count();
+            });
+            
+            $dailyBankTransfers = $agents->sum(function($agent) use ($today) {
+            return $agent->bankTransfers()->whereDate('created_at', $today)->count();
+            });
+
+            // Calculate monthly counts across all agents
+            $monthlyShops = $agents->sum(function($agent) use ($startOfMonth, $endOfMonth) {
+            return $agent->shops()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+            });
+            
+            $monthlyBankTransfers = $agents->sum(function($agent) use ($startOfMonth, $endOfMonth) {
+            return $agent->bankTransfers()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+            });
+
+            return [
+            'id' => $leader->id,
+            'unique_id' => $leader->unique_id,
+            'name' => $leader->name,
+            'mobile' => $leader->mobile,
+            'email' => $leader->email,
+            'is_blocked' => $leader->is_blocked,
+            'created_at' => $leader->created_at,
+            'total_agents' => $totalAgents,
+            'counts' => [
+                'shop_onboarding' => [
+                'daily' => $dailyShops,
+                'monthly' => $monthlyShops
+                ],
+                'bank_transfers' => [
+                'daily' => $dailyBankTransfers,
+                'monthly' => $monthlyBankTransfers
+                ]
+            ]
+            ];
+        });
+
+        $leaders->setCollection($leadersData);
 
         return response()->json([
             'success' => true,

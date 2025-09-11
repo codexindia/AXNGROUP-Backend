@@ -54,9 +54,17 @@ class ShopController extends Controller
     public function getByAgent(Request $request)
     {
         $shops = Shop::where('agent_id', $request->user()->id)
-                  //  ->with(['agent']) // Load only agent (do not include parent/leader)
-                    ->orderBy('created_at', 'desc')
-                    ->paginate(20);
+            //  ->with(['agent']) // Load only agent (do not include parent/leader)
+              ->orderBy('created_at', 'desc')
+              ->with(['onboardingSheetData'])
+              ->paginate(20)
+              ->through(function ($shop) {
+              // Use the correct relationship name (camelCase)
+              $shop['qr_trx'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->qr_trx : 0;
+              $shop['s_referral'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->referral : null;
+              unset($shop->onboardingSheetData); 
+              return $shop;
+              });
 
         return response()->json([
             'success' => true,
@@ -147,7 +155,7 @@ class ShopController extends Controller
             ], 422);
         }
 
-        $query = Shop::with(['agent.parent']);
+        $query = Shop::with(['agent.parent'])->with(['onboardingSheetData']);
 
         // Apply filters
         if ($request->filled('status')) {
@@ -187,7 +195,13 @@ class ShopController extends Controller
         }
 
         $perPage = $request->get('per_page', 20);
-        $shops = $query->orderBy('created_at', 'desc')->paginate($perPage);
+        $shops = $query->orderBy('created_at', 'desc')->paginate($perPage)->through(function ($shop) {
+            // Use the correct relationship name (camelCase)
+              $shop['qr_trx'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->qr_trx : 0;
+              $shop['s_referral'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->referral : null;
+              unset($shop->onboardingSheetData); 
+              return $shop;
+        });
 
         // Get statistics
         $stats = [

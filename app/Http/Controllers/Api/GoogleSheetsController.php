@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\SheetData;
 use App\Models\MonthlyBtSheetData;
+use App\Models\OnboardingSheetData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
@@ -48,305 +49,7 @@ class GoogleSheetsController extends Controller
         }
     }
 
-    /**
-     * Webhook endpoint to receive data from Google Sheets
-     */
-    public function webhookReceiveData(Request $request)
-    {
-        try {
-            Log::info('Google Sheets Webhook Data:', $request->all());
-
-            // Basic validation
-            $validator = Validator::make($request->all(), [
-                'sheet_name' => 'required|string|max:100',
-                'data' => 'required|array',
-                'row_numbers' => 'nullable|array',
-                'timestamp' => 'nullable|string',
-                'test' => 'nullable|boolean'
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors' => $validator->errors()
-                ], 422);
-            }
-
-            $sheetName = $request->input('sheet_name');
-            $data = $request->input('data');
-            $rowNumbers = $request->input('row_numbers', []);
-            $isTest = $request->input('test', false);
-            
-            $syncedCount = 0;
-            $errorCount = 0;
-            $syncedRows = [];
-            $errors = [];
-
-            foreach ($data as $index => $row) {
-                try {
-                    $rowNumber = $rowNumbers[$index] ?? null;
-
-                    // Different validation and processing based on sheet type
-                    if (stripos($sheetName, 'bank transfer') !== false) {
-                        // Process Bank Transfer sheet data
-                        $result = $this->processBankTransferWebhookRow($row, $sheetName, $isTest);
-                    } else {
-                        // Process Daily Bank Transfer (regular sheet) data
-                        $result = $this->processRegularWebhookRow($row, $sheetName, $isTest);
-                    }
-                    
-                    if ($result['success']) {
-                        $syncedCount++;
-                        if ($rowNumber) {
-                            $syncedRows[] = $rowNumber;
-                        }
-                    } else {
-                        $errorCount++;
-                        $errors[] = [
-                            'row' => $rowNumber,
-                            'error' => $result['error']
-                        ];
-                    }
-                    
-                } catch (\Exception $e) {
-                    Log::error('Error processing webhook row:', [
-                        'error' => $e->getMessage(), 
-                        'row' => $row,
-                        'row_number' => $rowNumber ?? 'unknown'
-                    ]);
-                    $errorCount++;
-                    $errors[] = [
-                        'row' => $rowNumber ?? 'unknown',
-                        'error' => $e->getMessage()
-                    ];
-                }
-            }
-
-            $response = [
-                'success' => true,
-                'message' => 'Webhook data processed successfully',
-                'data' => [
-                    'sheet_name' => $sheetName,
-                    'synced_records' => $syncedCount,
-                    'error_records' => $errorCount,
-                    'synced_rows' => $syncedRows
-                ]
-            ];
-
-            // Include errors in response if any occurred
-            if (!empty($errors)) {
-                $response['data']['errors'] = $errors;
-            }
-
-            // Log test requests differently
-            if ($isTest) {
-                Log::info('Test webhook request processed', $response);
-            }
-
-            return response()->json($response);
-
-        } catch (\Exception $e) {
-            Log::error('Webhook processing error:', ['error' => $e->getMessage()]);
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Error processing webhook data',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
-
-    /**
-     * Process Bank Transfer sheet row from webhook
-     */
-    private function processBankTransferWebhookRow($row, $sheetName, $isTest = false)
-    {
-        try {
-            // Validate Bank Transfer row data
-            $validator = Validator::make($row, [
-                'date' => 'required|string',
-                'cus_name' => 'required|string|min:1',
-                'mobile_no' => 'required|string|min:10',
-                'total_bank_transfer' => 'nullable|numeric|min:0'
-            ]);
-            
-            if ($validator->fails()) {
-                return [
-                    'success' => false,
-                    'error' => 'Validation failed: ' . implode(', ', $validator->errors()->all())
-                ];
-            }
-
-            // Parse date
-            $parsedDate = $this->parseDate($row['date']);
-            if (!$parsedDate) {
-                return [
-                    'success' => false,
-                    'error' => 'Invalid date format: ' . $row['date']
-                ];
-            }
-
-            // Skip processing for test requests
-            if ($isTest) {
-                Log::info('Test Bank Transfer data validated successfully', $row);
-                return ['success' => true, 'message' => 'Test data validated'];
-            }
-
-            // Process the data
-            $this->processBankTransferWebhookData($row, $parsedDate);
-            
-            return ['success' => true, 'message' => 'Bank Transfer data processed'];
-            
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'error' => 'Processing error: ' . $e->getMessage()
-            ];
-        }
-    }
-
-    /**
-     * Process regular sheet (Daily Bank Transfer) row from webhook
-     */
-    private function processRegularWebhookRow($row, $sheetName, $isTest = false)
-    {
-        try {
-            // Validate regular sheet row data
-            $validator = Validator::make($row, [
-                'date' => 'required|string',
-                'cus_no' => 'required|string|min:1',
-                'actual_bt_tide' => 'nullable|numeric'
-            ]);
-            
-            if ($validator->fails()) {
-                return [
-                    'success' => false,
-                    'error' => 'Validation failed: ' . implode(', ', $validator->errors()->all())
-                ];
-            }
-
-            // Parse date
-            $parsedDate = $this->parseDate($row['date']);
-            if (!$parsedDate) {
-                return [
-                    'success' => false,
-                    'error' => 'Invalid date format: ' . $row['date']
-                ];
-            }
-
-            // Skip processing for test requests
-            if ($isTest) {
-                Log::info('Test regular sheet data validated successfully', $row);
-                return ['success' => true, 'message' => 'Test data validated'];
-            }
-
-            // Process the data
-            $this->processRegularWebhookData($row, $parsedDate, $sheetName);
-            
-            return ['success' => true, 'message' => 'Regular sheet data processed'];
-            
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'error' => 'Processing error: ' . $e->getMessage()
-            ];
-        }
-    }
-
-    /**
-     * Process regular sheet data from webhook (updated)
-     */
-    private function processRegularWebhookData($row, $parsedDate, $sheetName)
-    {
-        $cusNo = $row['cus_no'];
-        $actualBtTide = isset($row['actual_bt_tide']) ? (float) $row['actual_bt_tide'] : null;
-
-        // Check if record already exists
-        $existingRecord = SheetData::where('date', $parsedDate->format('Y-m-d'))
-            ->where('cus_no', $cusNo)
-            ->where('sheet_name', $sheetName)
-            ->first();
-
-        if ($existingRecord) {
-            // Update existing record
-            $existingRecord->update([
-                'actual_bt_tide' => $actualBtTide
-            ]);
-            Log::info('Updated existing sheet data record', [
-                'date' => $parsedDate->format('Y-m-d'),
-                'cus_no' => $cusNo,
-                'actual_bt_tide' => $actualBtTide
-            ]);
-        } else {
-            // Create new record
-            SheetData::create([
-                'date' => $parsedDate->format('Y-m-d'),
-                'cus_no' => $cusNo,
-                'actual_bt_tide' => $actualBtTide,
-                'sheet_name' => $sheetName
-            ]);
-            Log::info('Created new sheet data record', [
-                'date' => $parsedDate->format('Y-m-d'),
-                'cus_no' => $cusNo,
-                'actual_bt_tide' => $actualBtTide
-            ]);
-        }
-    }
-
-    /**
-     * Process Bank Transfer sheet data from webhook (updated)
-     */
-    private function processBankTransferWebhookData($row, $parsedDate)
-    {
-        $year = $parsedDate->year;
-        $month = $parsedDate->month;
-        
-        $cusName = trim($row['cus_name']);
-        $mobileNo = trim($row['mobile_no']);
-        $totalBt = isset($row['total_bank_transfer']) ? (float) $row['total_bank_transfer'] : 0;
-
-        if (empty($mobileNo)) {
-            throw new \Exception('Mobile number is required for Bank Transfer data');
-        }
-
-        // Check if record already exists for this month
-        $existingRecord = MonthlyBtSheetData::where('mobile_no', $mobileNo)
-            ->where('year', $year)
-            ->where('month', $month)
-            ->first();
-
-        if ($existingRecord) {
-            // Update existing record
-            $existingRecord->update([
-                'cus_name' => $cusName,
-                'total_bank_transfer' => $totalBt,
-                'sheet_name' => 'Bank Transfer'
-            ]);
-            Log::info('Updated existing monthly BT record', [
-                'mobile_no' => $mobileNo,
-                'year' => $year,
-                'month' => $month,
-                'total_bank_transfer' => $totalBt
-            ]);
-        } else {
-            // Create new record
-            MonthlyBtSheetData::create([
-                'cus_name' => $cusName,
-                'mobile_no' => $mobileNo,
-                'total_bank_transfer' => $totalBt,
-                'year' => $year,
-                'month' => $month,
-                'sheet_name' => 'Bank Transfer'
-            ]);
-            Log::info('Created new monthly BT record', [
-                'mobile_no' => $mobileNo,
-                'year' => $year,
-                'month' => $month,
-                'total_bank_transfer' => $totalBt
-            ]);
-        }
-    }
+ 
 
     /**
      * Sync data from Google Sheet to database for specified date
@@ -660,6 +363,147 @@ class GoogleSheetsController extends Controller
                 'message' => 'Error syncing Bank Transfer sheet data',
                 'error' => $e->getMessage()
             ];
+        }
+    }
+
+    public function syncOnboardingData(Request $request)
+    {
+        if (!$this->apiKey) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Google Sheets API key not configured'
+            ], 500);
+        }
+
+        try {
+            // Fetch all data from the Onboarding sheet
+            $sheetName = 'Onbording';
+            $url = "https://sheets.googleapis.com/v4/spreadsheets/{$this->spreadsheetId}/values/{$sheetName}?key={$this->apiKey}";
+
+            $response = Http::get($url);
+
+            if (!$response->successful()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to fetch data from Google Sheets',
+                    'error' => $response->body()
+                ], 500);
+            }
+
+            $data = $response->json();
+
+            if (!isset($data['values']) || empty($data['values'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No data found in the Onboarding sheet'
+                ], 404);
+            }
+
+            $rows = $data['values'];
+            $headers = array_shift($rows); // First row as headers
+
+            if (empty($headers)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No headers found in the sheet'
+                ], 400);
+            }
+
+            // Find column indexes
+            $nameColumnIndex = $this->findColumnIndex($headers, ['Cus Name', 'Name', 'NAME', 'customer_name', 'Customer Name']);
+            $phoneColumnIndex = $this->findColumnIndex($headers, ['Mobile No.', 'Phone', 'PHONE', 'mobile', 'Mobile', 'contact', 'Contact']);
+            $referralColumnIndex = $this->findColumnIndex($headers, ['referral', 'Referral', 'REFERRAL', 'referral_code', 'Referral Code']);
+            $qrTrxColumnIndex = $this->findColumnIndex($headers, ['QR TRX', 'QR_TRX', 'qr trx', 'QR Trx', 'transaction', 'Transaction']);
+            $dateColumnIndex = $this->findColumnIndex($headers, ['date', 'Date', 'DATE', 'created_at', 'Created_At', 'timestamp', 'Timestamp']);
+
+            if ($nameColumnIndex === null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Name column not found. Looking for: name, customer_name columns'
+                ], 400);
+            }
+
+            if ($phoneColumnIndex === null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Phone column not found. Looking for: phone, mobile, contact columns'
+                ], 400);
+            }
+
+            $syncedCount = 0;
+            $updatedCount = 0;
+            $createdCount = 0;
+
+            foreach ($rows as $row) {
+                // Skip empty rows
+                if (empty($row) || count($row) <= max($nameColumnIndex, $phoneColumnIndex)) {
+                    continue;
+                }
+
+                $name = trim($row[$nameColumnIndex] ?? '');
+                $phone = trim($row[$phoneColumnIndex] ?? '');
+                $referral = trim($row[$referralColumnIndex] ?? '') ?: null;
+                $qrTrx = trim($row[$qrTrxColumnIndex] ?? '') ?: null;
+                $dateValue = trim($row[$dateColumnIndex] ?? '') ?: null;
+
+                // Skip if essential data is missing
+                if (empty($name) || empty($phone)) {
+                    continue;
+                }
+
+                // Parse date if provided
+                $parsedDate = null;
+                if (!empty($dateValue)) {
+                    try {
+                        $parsedDate = $this->parseDate($dateValue);
+                    } catch (\Exception $e) {
+                        // If date parsing fails, set to null
+                        $parsedDate = null;
+                    }
+                }
+
+                // Check if record already exists based on phone
+                $existingRecord = OnboardingSheetData::where('phone', $phone)->first();
+
+                $recordData = [
+                    'name' => $name,
+                    'phone' => substr($phone, 2),
+                    'referral' => $referral,
+                    'qr_trx' => $qrTrx,
+                    'date' => $parsedDate ? $parsedDate->format('Y-m-d') : null
+                ];
+
+                if ($existingRecord) {
+                    // Update existing record
+                    $existingRecord->update($recordData);
+                    $updatedCount++;
+                } else {
+                    // Create new record
+                    OnboardingSheetData::create($recordData);
+                    $createdCount++;
+                }
+                
+                $syncedCount++;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Onboarding data synced successfully',
+                'data' => [
+                    'total_synced' => $syncedCount,
+                    'created' => $createdCount,
+                    'updated' => $updatedCount
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error syncing onboarding data: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Error syncing onboarding data',
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }

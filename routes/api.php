@@ -172,6 +172,7 @@ Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
     // Google Sheets Integration Routes
     Route::prefix('google-sheets')->group(function () {
         Route::post('/sync-today', [GoogleSheetsController::class, 'syncTodayData']);
+        Route::post('/sync-onboarding', [GoogleSheetsController::class, 'syncOnboardingData']);
      //   Route::post('webhook', [GoogleSheetsController::class, 'webhookReceiveData']); // To manually trigger webhook processing if needed
     });
    

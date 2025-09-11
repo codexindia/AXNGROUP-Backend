@@ -1427,6 +1427,31 @@
 					}
 				},
 				{
+					"name": "Sync Onboarding Data (Admin/Leader)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "{{base_url}}/google-sheets/sync-onboarding",
+							"host": ["{{base_url}}"],
+							"path": ["google-sheets", "sync-onboarding"]
+						}
+					}
+				},
+				{
 					"name": "Webhook Endpoint (Public)",
 					"request": {
 						"method": "POST",
