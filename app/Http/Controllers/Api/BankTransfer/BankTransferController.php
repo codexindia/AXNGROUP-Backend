@@ -244,7 +244,7 @@ class BankTransferController extends Controller
     {
         $startDate = request()->query('start_date');
         $endDate = request()->query('end_date');
-        $needAll = request()->query('needAll');
+        $needAll = request()->query('need_all');
 
         if($needAll){
         $query = BankTransfer::with(['agent:id,name,mobile,parent_id', 'agent.parent:id,name,mobile']);
