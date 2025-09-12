@@ -244,10 +244,15 @@ class BankTransferController extends Controller
     {
         $startDate = request()->query('start_date');
         $endDate = request()->query('end_date');
+        $needAll = request()->query('needAll');
 
-        $query = BankTransfer::where('status', 'pending')
+        if($needAll){
+        $query = BankTransfer::with(['agent:id,name,mobile,parent_id', 'agent.parent:id,name,mobile']);
+        }else{
+          $query = BankTransfer::where('status', 'pending')
                         ->with(['agent:id,name,mobile,parent_id', 'agent.parent:id,name,mobile']);
-
+          
+        }
         // Apply date filters if provided
         if ($startDate) {
             $query->where('created_at', '>=', $startDate);
