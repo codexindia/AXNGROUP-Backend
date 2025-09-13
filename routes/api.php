@@ -147,7 +147,7 @@ Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
     // Hierarchy Module - Simplified parent-child relationships
     Route::prefix('hierarchy')->group(function () {
         Route::middleware('role:admin')->get('/my-leaders', [HierarchyController::class, 'getLeadersUnderAdmin']);
-        Route::middleware('role:leader')->get('/my-agents', [HierarchyController::class, 'getAgentsUnderLeader']);
+        Route::middleware('role:leader,leader')->get('/my-agents', [HierarchyController::class, 'getAgentsUnderLeader']);
         Route::middleware('role:agent,leader')->get('/my-parent', [HierarchyController::class, 'getMyParent']);
         Route::middleware('role:admin')->get('/complete', [HierarchyController::class, 'getCompleteHierarchy']);
     });
