@@ -87,14 +87,22 @@ class HierarchyController extends Controller
      */
     public function getAgentsUnderLeader(Request $request): JsonResponse
     {
-        if ($request->user()->role !== 'leader') {
+        if ($request->user()->role !== 'leader' && $request->user()->role !== 'admin') {
             return response()->json([
                 'success' => false,
-                'message' => 'Only leaders can access this endpoint'
+                'message' => 'Only leaders and admins can access this endpoint'
             ], 403);
         }
+      if($request->leader_id && $request->user()->role === 'admin'){
+        $leader = User::where('role','leader')->where('id',$request->leader_id)->first();
+        if(!$leader){
+            return response()->json([
+                'success' => false,
+                'message' => 'No leader found with the provided ID'
+            ], 404);
+        }
 
-        $agents = $request->user()->agents()->get();
+        $agents = $leader->agents()->get();
 
         $agentsData = $agents->map(function($agent) {
             // Get today's date
@@ -105,14 +113,17 @@ class HierarchyController extends Controller
             // Daily counts
             $dailyShops = $agent->shops()->whereDate('created_at', $today)->count();
             $dailyBankTransfers = $agent->bankTransfers()->whereDate('created_at', $today)->count();
+            $dailyRewardPasses = $agent->rewardPasses()->whereDate('created_at', $today)->count();
 
             // Monthly counts
             $monthlyShops = $agent->shops()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
             $monthlyBankTransfers = $agent->bankTransfers()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+            $monthlyRewardPasses = $agent->rewardPasses()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
 
             // Total counts
             $totalShops = $agent->shops()->count();
             $totalBankTransfers = $agent->bankTransfers()->count();
+            $totalRewardPasses = $agent->rewardPasses()->count();
 
             return [
                 'id' => $agent->id,
@@ -132,22 +143,39 @@ class HierarchyController extends Controller
                         'daily' => $dailyBankTransfers,
                         'monthly' => $monthlyBankTransfers,
                         'total' => $totalBankTransfers
+                    ],
+                    'reward_passes' => [
+                        'daily' => $dailyRewardPasses,
+                        'monthly' => $monthlyRewardPasses,
+                        'total' => $totalRewardPasses
                     ]
                 ]
             ];
         });
 
+        // Calculate summary for the leader
+        $summary = [
+            'total_agents' => $agentsData->count(),
+            'total_shops_today' => $agentsData->sum(fn($agent) => $agent['counts']['shop_onboarding']['daily']),
+            'total_shops_this_month' => $agentsData->sum(fn($agent) => $agent['counts']['shop_onboarding']['monthly']),
+            'total_shops_all_time' => $agentsData->sum(fn($agent) => $agent['counts']['shop_onboarding']['total']),
+            'total_bt_today' => $agentsData->sum(fn($agent) => $agent['counts']['bank_transfers']['daily']),
+            'total_bt_this_month' => $agentsData->sum(fn($agent) => $agent['counts']['bank_transfers']['monthly']),
+            'total_bt_all_time' => $agentsData->sum(fn($agent) => $agent['counts']['bank_transfers']['total']),
+            'total_reward_passes_today' => $agentsData->sum(fn($agent) => $agent['counts']['reward_passes']['daily']),
+            'total_reward_passes_this_month' => $agentsData->sum(fn($agent) => $agent['counts']['reward_passes']['monthly']),
+            'total_reward_passes_all_time' => $agentsData->sum(fn($agent) => $agent['counts']['reward_passes']['total'])
+        ];
+
         return response()->json([
             'success' => true,
             'message' => 'Agents retrieved successfully',
             'data' => $agentsData,
-           
+            'summary' => $summary
         ]);
     }
 
-    /**
-     * Get my parent (leader for agent, admin for leader)
-     */
+}
     public function getMyParent(Request $request): JsonResponse
     {
         $user = $request->user();
