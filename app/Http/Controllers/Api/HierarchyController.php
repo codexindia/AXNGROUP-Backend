@@ -103,12 +103,7 @@ class HierarchyController extends Controller
             }
         }else{
             $leader = $request->user();
-            if ($leader->role !== 'leader') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Only leaders can access their agents'
-                ], 403);
-            }
+           
         }
 
 
