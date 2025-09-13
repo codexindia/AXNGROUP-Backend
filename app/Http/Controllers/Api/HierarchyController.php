@@ -85,7 +85,7 @@ class HierarchyController extends Controller
     /**
      * Get all agents under a leader with necessary details and counts
      */
-   public function getAgentsUnderLeader(Request $request): JsonResponse
+     public function getAgentsUnderLeader(Request $request): JsonResponse
     {
         if ($request->user()->role !== 'leader' && $request->user()->role !== 'admin') {
             return response()->json([
@@ -100,6 +100,14 @@ class HierarchyController extends Controller
                     'success' => false,
                     'message' => 'No leader found with the provided ID'
                 ], 404);
+            }
+        }else{
+            $leader = $request->user();
+            if ($leader->role !== 'leader') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only leaders can access their agents'
+                ], 403);
             }
         }
 
@@ -176,7 +184,7 @@ class HierarchyController extends Controller
                 'summary' => $summary
             ]);
         }
-    
+
     /**
      * Get my parent (leader for agent, admin for leader)
      */
