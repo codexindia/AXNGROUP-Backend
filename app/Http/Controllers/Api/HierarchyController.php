@@ -36,6 +36,10 @@ class HierarchyController extends Controller
             $dailyShops = $agents->sum(function($agent) use ($today) {
             return $agent->shops()->whereDate('created_at', $today)->count();
             });
+            //daliy reward passes
+            $dailyRewardPasses = $agents->sum(function($agent) use ($today) {
+            return $agent->rewardPasses()->whereDate('created_at', $today)->count();
+            });
             
             $dailyBankTransfers = $agents->sum(function($agent) use ($today) {
             return $agent->bankTransfers()->whereDate('created_at', $today)->count();
@@ -44,6 +48,10 @@ class HierarchyController extends Controller
             // Calculate monthly counts across all agents
             $monthlyShops = $agents->sum(function($agent) use ($startOfMonth, $endOfMonth) {
             return $agent->shops()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+            });
+            //monthly reward passes
+            $monthlyRewardPasses = $agents->sum(function($agent) use ($startOfMonth, $endOfMonth) {
+            return $agent->rewardPasses()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
             });
             
             $monthlyBankTransfers = $agents->sum(function($agent) use ($startOfMonth, $endOfMonth) {
@@ -63,6 +71,10 @@ class HierarchyController extends Controller
                 'shop_onboarding' => [
                 'daily' => $dailyShops,
                 'monthly' => $monthlyShops
+                ],
+                'reward_passes' => [
+                'daily' => $dailyRewardPasses,
+                'monthly' => $monthlyRewardPasses
                 ],
                 'bank_transfers' => [
                 'daily' => $dailyBankTransfers,
