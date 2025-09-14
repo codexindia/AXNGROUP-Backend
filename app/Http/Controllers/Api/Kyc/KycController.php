@@ -49,7 +49,7 @@ class KycController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $validator->errors()->first(),
-                'errors' => $validator->errors()->first()
+                'errors' => $validator->errors()
             ], 422);
         }
 
@@ -175,7 +175,7 @@ class KycController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $validator->errors()->first(),
-                'errors' => $validator->errors()->first()
+                'errors' => $validator->errors()
             ], 422);
         }
 
@@ -288,7 +288,7 @@ class KycController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $validator->errors()->first(),
-                'errors' => $validator->errors()->first()
+                'errors' => $validator->errors()
             ], 422);
         }
 

@@ -25,7 +25,7 @@ class ShopController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $validator->errors()->first(),
-                'errors' => $validator->errors()->first()
+                'errors' => $validator->errors()
             ], 422);
         }
 
@@ -151,7 +151,7 @@ class ShopController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $validator->errors()->first(),
-                'errors' => $validator->errors()->first()
+                'errors' => $validator->errors()
             ], 422);
         }
 
@@ -246,7 +246,7 @@ class ShopController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $validator->errors()->first(),
-                'errors' => $validator->errors()->first()
+                'errors' => $validator->errors()
             ], 422);
         }
 
@@ -325,7 +325,7 @@ class ShopController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $validator->errors()->first(),
-                'errors' => $validator->errors()->first()
+                'errors' => $validator->errors()
             ], 422);
         }
 
@@ -441,7 +441,7 @@ class ShopController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => $validator->errors()->first(),
-                'errors' => $validator->errors()->first()
+                'errors' => $validator->errors()
             ], 422);
         }
 
