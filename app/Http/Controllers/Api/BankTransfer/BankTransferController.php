@@ -24,7 +24,7 @@ class BankTransferController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error',
+                'message' => $validator->errors()->first(),
                 'errors' => $validator->errors()->first()
             ], 422);
         }
@@ -164,7 +164,7 @@ class BankTransferController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error',
+                'message' => $validator->errors()->first(),
                 'errors' => $validator->errors()->first()
             ], 422);
         }
