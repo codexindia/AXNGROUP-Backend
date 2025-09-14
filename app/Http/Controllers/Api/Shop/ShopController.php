@@ -348,7 +348,14 @@ class ShopController extends Controller
                                             ->where('status', 'rejected')
                                             ->count(),
                 'bank_transfers' => \App\Models\BankTransfer::whereDate('created_at', $currentDate)->count(),
-                'transfer_amount' => \App\Models\BankTransfer::whereDate('created_at', $currentDate)->sum('amount') ?? 0
+                'transfer_amount' => \App\Models\BankTransfer::whereDate('created_at', $currentDate)->sum('amount') ?? 0,
+                'reward_passes_created' => \App\Models\RewardPass::whereDate('created_at', $currentDate)->count(),
+                'reward_passes_approved' => \App\Models\RewardPass::whereDate('updated_at', $currentDate)
+                                                                 ->where('status', 'approved')
+                                                                 ->count(),
+                'reward_passes_rejected' => \App\Models\RewardPass::whereDate('updated_at', $currentDate)
+                                                                 ->where('status', 'rejected')
+                                                                 ->count()
             ];
 
             $dailyStats[] = $dayStats;
@@ -366,13 +373,18 @@ class ShopController extends Controller
                 'onboarding_approved' => array_sum(array_column($dailyStats, 'onboarding_approved')),
                 'onboarding_rejected' => array_sum(array_column($dailyStats, 'onboarding_rejected')),
                 'bank_transfers' => array_sum(array_column($dailyStats, 'bank_transfers')),
-                'total_transfer_amount' => array_sum(array_column($dailyStats, 'transfer_amount'))
+                'total_transfer_amount' => array_sum(array_column($dailyStats, 'transfer_amount')),
+                'reward_passes_created' => array_sum(array_column($dailyStats, 'reward_passes_created')),
+                'reward_passes_approved' => array_sum(array_column($dailyStats, 'reward_passes_approved')),
+                'reward_passes_rejected' => array_sum(array_column($dailyStats, 'reward_passes_rejected'))
             ],
             'averages' => [
                 'daily_onboarding' => round(array_sum(array_column($dailyStats, 'onboarding_created')) / $days, 2),
                 'daily_approvals' => round(array_sum(array_column($dailyStats, 'onboarding_approved')) / $days, 2),
                 'daily_transfers' => round(array_sum(array_column($dailyStats, 'bank_transfers')) / $days, 2),
-                'daily_transfer_amount' => round(array_sum(array_column($dailyStats, 'transfer_amount')) / $days, 2)
+                'daily_transfer_amount' => round(array_sum(array_column($dailyStats, 'transfer_amount')) / $days, 2),
+                'daily_reward_passes' => round(array_sum(array_column($dailyStats, 'reward_passes_created')) / $days, 2),
+                'daily_reward_approvals' => round(array_sum(array_column($dailyStats, 'reward_passes_approved')) / $days, 2)
             ]
         ];
 

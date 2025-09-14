@@ -152,8 +152,8 @@ class WalletController extends Controller
             ], 422);
         }
 
-        // Only leaders and admins can credit wallets
-        if (!in_array($request->user()->role, ['leader', 'admin'])) {
+        // Only  admins can credit wallets
+        if (!in_array($request->user()->role, ['admin'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized to credit wallet'
