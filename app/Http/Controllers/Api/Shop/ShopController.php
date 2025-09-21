@@ -53,28 +53,29 @@ class ShopController extends Controller
 
     public function getByAgent(Request $request)
     {
-           //date filter added
+        //date filter added
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
         $shops = Shop::where('agent_id', $request->user()->id)
             //  ->with(['agent']) // Load only agent (do not include parent/leader)
-              ->orderBy('created_at', 'desc')
-                ->when($startDate, function ($query) use ($startDate) {
-                    return $query->where('created_at', '>=', $startDate);
-                })
-                ->when($endDate, function ($query) use ($endDate) {
-                    return $query->where('created_at', '<=', $endDate);
-                })
-              ->with(['onboardingSheetData'])
-              ->paginate(20)
-              ->through(function ($shop) {
-              // Use the correct relationship name (camelCase)
-              $shop['qr_trx'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->qr_trx : 0;
-              $shop['s_referral'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->referral : null;
-              unset($shop->onboardingSheetData); 
-              return $shop;
-              });
+             ->when($startDate, function ($query) use ($startDate) {
+                return $query->where('created_at', '>=', $startDate);
+            })
+            ->when($endDate, function ($query) use ($endDate) {
+                return $query->where('created_at', '<=', $endDate);
+            })
+            ->orderBy('created_at', 'desc')
+           
+            ->with(['onboardingSheetData'])
+            ->paginate(20)
+            ->through(function ($shop) {
+                // Use the correct relationship name (camelCase)
+                $shop['qr_trx'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->qr_trx : 0;
+                $shop['s_referral'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->referral : null;
+                unset($shop->onboardingSheetData);
+                return $shop;
+            });
 
         return response()->json([
             'success' => true,
@@ -96,9 +97,9 @@ class ShopController extends Controller
         $agentIds = $request->user()->agents()->pluck('id');
 
         $shops = Shop::whereIn('agent_id', $agentIds)
-                    ->with(['agent:id,name'])
-                    ->orderBy('created_at', 'desc')
-                    ->paginate(20);
+            ->with(['agent:id,name'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
 
         return response()->json([
             'success' => true,
@@ -122,7 +123,7 @@ class ShopController extends Controller
         $isAgentOwner = $shop->agent_id === $user->id;
         $isTeamLeader = $user->role === 'leader' && $shop->agent->parent_id === $user->id;
         $isAdmin = in_array($user->role, ['admin']);
-        
+
         if (!$isAgentOwner && !$isTeamLeader && !$isAdmin) {
             return response()->json([
                 'success' => false,
@@ -195,23 +196,23 @@ class ShopController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('customer_name', 'like', "%{$search}%")
-                  ->orWhere('customer_mobile', 'like', "%{$search}%")
-                  ->orWhereHas('agent', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('agent.parent', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhere('customer_mobile', 'like', "%{$search}%")
+                    ->orWhereHas('agent', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('agent.parent', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
         $perPage = $request->get('per_page', 20);
         $shops = $query->orderBy('created_at', 'desc')->paginate($perPage)->through(function ($shop) {
             // Use the correct relationship name (camelCase)
-              $shop['qr_trx'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->qr_trx : 0;
-              $shop['s_referral'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->referral : null;
-              unset($shop->onboardingSheetData); 
-              return $shop;
+            $shop['qr_trx'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->qr_trx : 0;
+            $shop['s_referral'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->referral : null;
+            unset($shop->onboardingSheetData);
+            return $shop;
         });
 
         // Get statistics
@@ -289,7 +290,7 @@ class ShopController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('customer_name', 'like', "%{$search}%")
-                  ->orWhere('customer_mobile', 'like', "%{$search}%");
+                    ->orWhere('customer_mobile', 'like', "%{$search}%");
             });
         }
 
@@ -347,26 +348,26 @@ class ShopController extends Controller
         $dailyStats = [];
         for ($i = 0; $i < $days; $i++) {
             $currentDate = $date->copy()->subDays($i);
-            
+
             $dayStats = [
                 'date' => $currentDate->format('Y-m-d'),
                 'day_name' => $currentDate->format('l'),
                 'onboarding_created' => Shop::whereDate('created_at', $currentDate)->count(),
                 'onboarding_approved' => Shop::whereDate('updated_at', $currentDate)
-                                            ->where('status', 'approved')
-                                            ->count(),
+                    ->where('status', 'approved')
+                    ->count(),
                 'onboarding_rejected' => Shop::whereDate('updated_at', $currentDate)
-                                            ->where('status', 'rejected')
-                                            ->count(),
+                    ->where('status', 'rejected')
+                    ->count(),
                 'bank_transfers' => \App\Models\BankTransfer::whereDate('created_at', $currentDate)->count(),
                 'transfer_amount' => \App\Models\BankTransfer::whereDate('created_at', $currentDate)->sum('amount') ?? 0,
                 'reward_passes_created' => \App\Models\RewardPass::whereDate('created_at', $currentDate)->count(),
                 'reward_passes_approved' => \App\Models\RewardPass::whereDate('updated_at', $currentDate)
-                                                                 ->where('status', 'approved')
-                                                                 ->count(),
+                    ->where('status', 'approved')
+                    ->count(),
                 'reward_passes_rejected' => \App\Models\RewardPass::whereDate('updated_at', $currentDate)
-                                                                 ->where('status', 'rejected')
-                                                                 ->count()
+                    ->where('status', 'rejected')
+                    ->count()
             ];
 
             $dailyStats[] = $dayStats;
@@ -401,29 +402,29 @@ class ShopController extends Controller
 
         // Top performing agents and leaders
         $topAgents = Shop::select('agent_id', DB::raw('count(*) as total_onboarding'))
-                        ->whereBetween('created_at', [
-                            $date->copy()->subDays($days - 1)->startOfDay(),
-                            $date->copy()->endOfDay()
-                        ])
-                        ->with('agent:id,name')
-                        ->groupBy('agent_id')
-                        ->orderBy('total_onboarding', 'desc')
-                        ->limit(10)
-                        ->get();
+            ->whereBetween('created_at', [
+                $date->copy()->subDays($days - 1)->startOfDay(),
+                $date->copy()->endOfDay()
+            ])
+            ->with('agent:id,name')
+            ->groupBy('agent_id')
+            ->orderBy('total_onboarding', 'desc')
+            ->limit(10)
+            ->get();
 
         $topLeaders = Shop::select('users.id as leader_id', 'users.name as leader_name', DB::raw('count(shops.id) as total_approved'))
-                         ->join('users as agents', 'shops.agent_id', '=', 'agents.id')
-                         ->join('users', 'agents.parent_id', '=', 'users.id')
-                         ->whereBetween('shops.updated_at', [
-                             $date->copy()->subDays($days - 1)->startOfDay(),
-                             $date->copy()->endOfDay()
-                         ])
-                         ->where('shops.status', 'approved')
-                         ->where('users.role', 'leader')
-                         ->groupBy('users.id', 'users.name')
-                         ->orderBy('total_approved', 'desc')
-                         ->limit(10)
-                         ->get();
+            ->join('users as agents', 'shops.agent_id', '=', 'agents.id')
+            ->join('users', 'agents.parent_id', '=', 'users.id')
+            ->whereBetween('shops.updated_at', [
+                $date->copy()->subDays($days - 1)->startOfDay(),
+                $date->copy()->endOfDay()
+            ])
+            ->where('shops.status', 'approved')
+            ->where('users.role', 'leader')
+            ->groupBy('users.id', 'users.name')
+            ->orderBy('total_approved', 'desc')
+            ->limit(10)
+            ->get();
 
         return response()->json([
             'success' => true,
@@ -489,12 +490,12 @@ class ShopController extends Controller
         // If admin approved, calculate and credit payout
         if ($request->status === 'approved') {
             $payoutAmount = PayoutService::calculateOnboardingPayout($shop->agent_id);
-            
+
             if ($payoutAmount > 0) {
                 PayoutService::creditPayout(
-                    $shop->agent_id, 
-                    $payoutAmount, 
-                    'onboarding_payout', 
+                    $shop->agent_id,
+                    $payoutAmount,
+                    'onboarding_payout',
                     $shop->id
                 );
             }
@@ -513,9 +514,9 @@ class ShopController extends Controller
     public function getPendingForAdmin()
     {
         $shops = Shop::where('status', 'pending') // Direct pending, no leader approval needed
-                     ->with(['agent.parent'])
-                     ->orderBy('created_at', 'asc')
-                     ->paginate(20);
+            ->with(['agent.parent'])
+            ->orderBy('created_at', 'asc')
+            ->paginate(20);
 
         return response()->json([
             'success' => true,
@@ -560,25 +561,25 @@ class ShopController extends Controller
         // Monthly statistics (current month)
         $currentMonth = Carbon::now();
         $thisMonthShops = Shop::where('agent_id', $agentId)
-                             ->whereMonth('created_at', $currentMonth->month)
-                             ->whereYear('created_at', $currentMonth->year)
-                             ->count();
-        
+            ->whereMonth('created_at', $currentMonth->month)
+            ->whereYear('created_at', $currentMonth->year)
+            ->count();
+
         $thisMonthBankTransfers = \App\Models\BankTransfer::where('agent_id', $agentId)
-                                                        ->whereMonth('created_at', $currentMonth->month)
-                                                        ->whereYear('created_at', $currentMonth->year)
-                                                        ->count();
+            ->whereMonth('created_at', $currentMonth->month)
+            ->whereYear('created_at', $currentMonth->year)
+            ->count();
 
         $thisMonthBankTransferAmount = \App\Models\BankTransfer::where('agent_id', $agentId)
-                                                             ->where('status', 'approved')
-                                                             ->whereMonth('updated_at', $currentMonth->month)
-                                                             ->whereYear('updated_at', $currentMonth->year)
-                                                             ->sum('amount') ?? 0;
+            ->where('status', 'approved')
+            ->whereMonth('updated_at', $currentMonth->month)
+            ->whereYear('updated_at', $currentMonth->year)
+            ->sum('amount') ?? 0;
 
         $thisMonthRewardPasses = \App\Models\RewardPass::where('agent_id', $agentId)
-                                                      ->whereMonth('created_at', $currentMonth->month)
-                                                      ->whereYear('created_at', $currentMonth->year)
-                                                      ->count();
+            ->whereMonth('created_at', $currentMonth->month)
+            ->whereYear('created_at', $currentMonth->year)
+            ->count();
 
         return response()->json([
             'success' => true,
@@ -607,7 +608,7 @@ class ShopController extends Controller
                     'total_amount' => $totalBankTransferAmount,
                     'this_month' => $thisMonthBankTransfers,
                     'this_month_amount' => $thisMonthBankTransferAmount,
-                   
+
                 ],
                 'reward_passes' => [
                     'total' => $totalRewardPasses,
@@ -621,8 +622,8 @@ class ShopController extends Controller
                     'total_approved' => $approvedShops + $approvedBankTransfers + $approvedRewardPasses,
                     'total_pending' => $pendingShops + $pendingBankTransfers + $pendingRewardPasses,
                     'total_rejected' => $rejectedShops + $rejectedBankTransfers + $rejectedRewardPasses,
-                    'success_rate' => $totalShops + $totalBankTransfers + $totalRewardPasses > 0 
-                        ? round((($approvedShops + $approvedBankTransfers + $approvedRewardPasses) / ($totalShops + $totalBankTransfers + $totalRewardPasses)) * 100, 2) 
+                    'success_rate' => $totalShops + $totalBankTransfers + $totalRewardPasses > 0
+                        ? round((($approvedShops + $approvedBankTransfers + $approvedRewardPasses) / ($totalShops + $totalBankTransfers + $totalRewardPasses)) * 100, 2)
                         : 0
                 ]
             ]
@@ -643,7 +644,7 @@ class ShopController extends Controller
         }
 
         $leaderId = $request->user()->id;
-        
+
         // Get all agents under this leader
         $agentIds = $request->user()->agents()->pluck('id');
         $totalAgents = $agentIds->count();
@@ -715,38 +716,38 @@ class ShopController extends Controller
         // Monthly statistics (current month)
         $currentMonth = Carbon::now();
         $thisMonthShops = Shop::whereIn('agent_id', $agentIds)
-                             ->whereMonth('created_at', $currentMonth->month)
-                             ->whereYear('created_at', $currentMonth->year)
-                             ->count();
-        
+            ->whereMonth('created_at', $currentMonth->month)
+            ->whereYear('created_at', $currentMonth->year)
+            ->count();
+
         $thisMonthBankTransfers = \App\Models\BankTransfer::whereIn('agent_id', $agentIds)
-                                                        ->whereMonth('created_at', $currentMonth->month)
-                                                        ->whereYear('created_at', $currentMonth->year)
-                                                        ->count();
+            ->whereMonth('created_at', $currentMonth->month)
+            ->whereYear('created_at', $currentMonth->year)
+            ->count();
 
         $thisMonthBankTransferAmount = \App\Models\BankTransfer::whereIn('agent_id', $agentIds)
-                                                             ->where('status', 'approved')
-                                                             ->whereMonth('updated_at', $currentMonth->month)
-                                                             ->whereYear('updated_at', $currentMonth->year)
-                                                             ->sum('amount') ?? 0;
+            ->where('status', 'approved')
+            ->whereMonth('updated_at', $currentMonth->month)
+            ->whereYear('updated_at', $currentMonth->year)
+            ->sum('amount') ?? 0;
 
         $thisMonthRewardPasses = \App\Models\RewardPass::whereIn('agent_id', $agentIds)
-                                                      ->whereMonth('created_at', $currentMonth->month)
-                                                      ->whereYear('created_at', $currentMonth->year)
-                                                      ->count();
+            ->whereMonth('created_at', $currentMonth->month)
+            ->whereYear('created_at', $currentMonth->year)
+            ->count();
 
         // Individual agent performance
         $agentPerformance = [];
         foreach ($agentIds as $agentId) {
             $agent = User::find($agentId);
-            
+
             $agentShops = Shop::where('agent_id', $agentId)->count();
             $agentApprovedShops = Shop::where('agent_id', $agentId)->where('status', 'approved')->count();
-            
+
             $agentBankTransfers = \App\Models\BankTransfer::where('agent_id', $agentId)->count();
             $agentApprovedBankTransfers = \App\Models\BankTransfer::where('agent_id', $agentId)->where('status', 'approved')->count();
             $agentBankTransferAmount = \App\Models\BankTransfer::where('agent_id', $agentId)->where('status', 'approved')->sum('amount') ?? 0;
-            
+
             $agentRewardPasses = \App\Models\RewardPass::where('agent_id', $agentId)->count();
             $agentApprovedRewardPasses = \App\Models\RewardPass::where('agent_id', $agentId)->where('status', 'approved')->count();
 
@@ -776,7 +777,7 @@ class ShopController extends Controller
         }
 
         // Sort agents by total activities (most active first)
-        usort($agentPerformance, function($a, $b) {
+        usort($agentPerformance, function ($a, $b) {
             return $b['total_activities'] <=> $a['total_activities'];
         });
 
@@ -817,8 +818,8 @@ class ShopController extends Controller
                     'total_approved' => $approvedShops + $approvedBankTransfers + $approvedRewardPasses,
                     'total_pending' => $pendingShops + $pendingBankTransfers + $pendingRewardPasses,
                     'total_rejected' => $rejectedShops + $rejectedBankTransfers + $rejectedRewardPasses,
-                    'success_rate' => ($totalShops + $totalBankTransfers + $totalRewardPasses) > 0 
-                        ? round((($approvedShops + $approvedBankTransfers + $approvedRewardPasses) / ($totalShops + $totalBankTransfers + $totalRewardPasses)) * 100, 2) 
+                    'success_rate' => ($totalShops + $totalBankTransfers + $totalRewardPasses) > 0
+                        ? round((($approvedShops + $approvedBankTransfers + $approvedRewardPasses) / ($totalShops + $totalBankTransfers + $totalRewardPasses)) * 100, 2)
                         : 0
                 ],
                 'agent_performance' => $agentPerformance
