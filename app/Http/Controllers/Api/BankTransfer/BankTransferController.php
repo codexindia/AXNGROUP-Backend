@@ -85,8 +85,18 @@ class BankTransferController extends Controller
 
     public function getByAgent(Request $request)
     {
+        //date filter added
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
         $bankTransfers = BankTransfer::where('agent_id', $request->user()->id)
                                    ->with(['agent.parent'])
+                                   ->when($startDate, function ($query) use ($startDate) {
+                                       return $query->where('created_at', '>=', $startDate);
+                                   })
+                                   ->when($endDate, function ($query) use ($endDate) {
+                                       return $query->where('created_at', '<=', $endDate);
+                                   })
                                    ->orderBy('created_at', 'desc')
                                    ->paginate(20);
 

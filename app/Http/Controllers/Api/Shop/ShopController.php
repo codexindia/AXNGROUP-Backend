@@ -53,9 +53,19 @@ class ShopController extends Controller
 
     public function getByAgent(Request $request)
     {
+           //date filter added
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
         $shops = Shop::where('agent_id', $request->user()->id)
             //  ->with(['agent']) // Load only agent (do not include parent/leader)
               ->orderBy('created_at', 'desc')
+                ->when($startDate, function ($query) use ($startDate) {
+                    return $query->where('created_at', '>=', $startDate);
+                })
+                ->when($endDate, function ($query) use ($endDate) {
+                    return $query->where('created_at', '<=', $endDate);
+                })
               ->with(['onboardingSheetData'])
               ->paginate(20)
               ->through(function ($shop) {
@@ -74,6 +84,7 @@ class ShopController extends Controller
 
     public function getByLeader(Request $request)
     {
+
         if ($request->user()->role !== 'leader') {
             return response()->json([
                 'success' => false,
@@ -595,7 +606,8 @@ class ShopController extends Controller
                     'rejected' => $rejectedBankTransfers,
                     'total_amount' => $totalBankTransferAmount,
                     'this_month' => $thisMonthBankTransfers,
-                    'this_month_amount' => $thisMonthBankTransferAmount
+                    'this_month_amount' => $thisMonthBankTransferAmount,
+                   
                 ],
                 'reward_passes' => [
                     'total' => $totalRewardPasses,
