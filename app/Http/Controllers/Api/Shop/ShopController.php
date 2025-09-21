@@ -59,7 +59,7 @@ class ShopController extends Controller
 
         $shops = Shop::where('agent_id', $request->user()->id)
             //  ->with(['agent']) // Load only agent (do not include parent/leader)
-             ->when($startDate, function ($query) use ($startDate) {
+            ->when($startDate, function ($query) use ($startDate) {
                 return $query->where('created_at', '>=', $startDate);
             })
             ->when($endDate, function ($query) use ($endDate) {

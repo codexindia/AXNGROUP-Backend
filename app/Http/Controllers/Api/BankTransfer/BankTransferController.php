@@ -47,8 +47,8 @@ class BankTransferController extends Controller
 
         if (($todayTotal + $request->amount) > $dailyLimit) {
             return response()->json([
-            'success' => false,
-            'message' => 'Daily limit exceeded. Maximum ₹1,00,000 per day allowed. Current today total: ₹' . number_format($todayTotal)
+                'success' => false,
+                'message' => 'Daily limit exceeded. Maximum ₹1,00,000 per day allowed. Current today total: ₹' . number_format($todayTotal)
             ], 429);
         }
 
@@ -62,8 +62,8 @@ class BankTransferController extends Controller
 
         if (($monthlyTotal + $request->amount) > $monthlyLimit) {
             return response()->json([
-            'success' => false,
-            'message' => 'Monthly limit exceeded. Maximum ₹2,00,000 per month allowed. Current month total: ₹' . number_format($monthlyTotal)
+                'success' => false,
+                'message' => 'Monthly limit exceeded. Maximum ₹2,00,000 per month allowed. Current month total: ₹' . number_format($monthlyTotal)
             ], 429);
         }
 
@@ -90,15 +90,15 @@ class BankTransferController extends Controller
         $endDate = $request->input('end_date');
 
         $bankTransfers = BankTransfer::where('agent_id', $request->user()->id)
-                                   ->with(['agent.parent'])
-                                   ->when($startDate, function ($query) use ($startDate) {
-                                       return $query->where('created_at', '>=', $startDate);
-                                   })
-                                   ->when($endDate, function ($query) use ($endDate) {
-                                       return $query->where('created_at', '<=', $endDate);
-                                   })
-                                   ->orderBy('created_at', 'desc')
-                                   ->paginate(20);
+           // ->with(['agent.parent'])
+            ->when($startDate, function ($query) use ($startDate) {
+                return $query->where('created_at', '>=', $startDate);
+            })
+            ->when($endDate, function ($query) use ($endDate) {
+                return $query->where('created_at', '<=', $endDate);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
 
         return response()->json([
             'success' => true,
@@ -119,9 +119,9 @@ class BankTransferController extends Controller
         $agentIds = $request->user()->agents()->pluck('id');
 
         $bankTransfers = BankTransfer::whereIn('agent_id', $agentIds)
-                                   ->with(['agent'])
-                                   ->orderBy('created_at', 'desc')
-                                   ->paginate(20);
+            ->with(['agent'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
 
         return response()->json([
             'success' => true,
@@ -145,7 +145,7 @@ class BankTransferController extends Controller
         $isAgentOwner = $bankTransfer->agent_id === $user->id;
         $isTeamLeader = $user->role === 'leader' && $bankTransfer->agent->parent_id === $user->id;
         $isAdmin = in_array($user->role, ['admin']);
-        
+
         if (!$isAgentOwner && !$isTeamLeader && !$isAdmin) {
             return response()->json([
                 'success' => false,
@@ -221,15 +221,15 @@ class BankTransferController extends Controller
             if (PayoutService::isBankTransferEligible($bankTransfer->amount)) {
                 // Get agent's total bank transfer amount for current month
                 $totalAmount = PayoutService::getAgentBankTransferTotal($bankTransfer->agent_id);
-                
+
                 // Calculate payout based on total monthly amount
                 $payoutAmount = PayoutService::calculateBankTransferPayout($totalAmount);
-                
+
                 if ($payoutAmount > 0) {
                     PayoutService::creditPayout(
-                        $bankTransfer->agent_id, 
-                        $payoutAmount, 
-                        'bank_transfer_payout', 
+                        $bankTransfer->agent_id,
+                        $payoutAmount,
+                        'bank_transfer_payout',
                         $bankTransfer->id
                     );
                 }
@@ -256,12 +256,11 @@ class BankTransferController extends Controller
         $endDate = request()->query('end_date');
         $needAll = request()->query('need_all');
 
-        if($needAll){
-        $query = BankTransfer::with(['agent:id,name,mobile,parent_id', 'agent.parent:id,name,mobile']);
-        }else{
-          $query = BankTransfer::where('status', 'pending')
-                        ->with(['agent:id,name,mobile,parent_id', 'agent.parent:id,name,mobile']);
-          
+        if ($needAll) {
+            $query = BankTransfer::with(['agent:id,name,mobile,parent_id', 'agent.parent:id,name,mobile']);
+        } else {
+            $query = BankTransfer::where('status', 'pending')
+                ->with(['agent:id,name,mobile,parent_id', 'agent.parent:id,name,mobile']);
         }
         // Apply date filters if provided
         if ($startDate) {
@@ -276,25 +275,25 @@ class BankTransferController extends Controller
         // Group by customer mobile number
         $groupedTransfers = $bankTransfers->groupBy('customer_mobile')->map(function ($transfers, $mobileNo) {
             $totalAmount = $transfers->sum('amount');
-            
+
             // Get actual amount from monthly_bt_sheet_data table for current month
             $currentMonth = now()->month;
             $currentYear = now()->year;
-            
+
             $monthlyData = MonthlyBtSheetData::where('mobile_no', $mobileNo)
-                                           ->where('year', $currentYear)
-                                           ->where('month', $currentMonth)
-                                           ->first();
-            
+                ->where('year', $currentYear)
+                ->where('month', $currentMonth)
+                ->first();
+
             $totalActualAmount = $monthlyData ? $monthlyData->total_bank_transfer : 0;
             $dailyActualAmount = 0;
             $rows = $transfers->map(function ($transfer) use ($totalActualAmount, $transfers, &$dailyActualAmount) {
                 // Get individual actual amount from daily sheet_data table
                 $transferDate = $transfer->created_at->format('Y-m-d');
                 $dailySheetData = SheetData::where('cus_no', $transfer->customer_mobile)
-                                         ->where('date', $transferDate)
-                                         ->first();
-                
+                    ->where('date', $transferDate)
+                    ->first();
+
                 $individualActualAmount = $dailySheetData ? $dailySheetData->actual_bt_tide : 0;
                 $dailyActualAmount += $individualActualAmount;
 
@@ -321,7 +320,7 @@ class BankTransferController extends Controller
 
         // Convert to indexed array and add pagination-like structure
         $result = $groupedTransfers->values();
-        
+
         // Simple pagination simulation
         $perPage = request()->query('per_page', 20);
         $page = request()->query('page', 1);
