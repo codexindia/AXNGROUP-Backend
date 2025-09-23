@@ -167,7 +167,7 @@ class GoogleSheetsController extends Controller
                     $parsedDate = $this->parseDate($dateValue);
                     // Compare with target date - only process records matching the target date
                     if (!$parsedDate || $dateValue !== $targetDateString) {
-                        continue;
+                      //  continue;
                     }
                 } catch (\Exception $e) {
                     continue;
