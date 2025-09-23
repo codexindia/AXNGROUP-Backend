@@ -43,13 +43,14 @@ class GoogleSheetsController extends Controller
     private function parseDate($dateString)
     {
         try {
-            return Carbon::parse($dateString);
+            return Carbon::createFromFormat('d/m/Y', $dateString, 'Asia/Kolkata')
+                ->setTimezone('Asia/Kolkata');
         } catch (\Exception $e) {
             return null;
         }
     }
 
- 
+
 
     /**
      * Sync data from Google Sheet to database for specified date
@@ -77,12 +78,12 @@ class GoogleSheetsController extends Controller
         }
 
         $sheetName = $request->input('sheet_name');
-        
+
         // Use provided date or default to yesterday
-        $targetDate = $request->input('date') 
+        $targetDate = $request->input('date')
             ? Carbon::createFromFormat('Y-m-d', $request->input('date'))
             : Carbon::today()->subDay();
-        
+
         $targetDateString = $targetDate->format('d/m/Y'); // Format for sheet comparison
 
         try {
@@ -164,7 +165,6 @@ class GoogleSheetsController extends Controller
                 // Parse and validate date
                 try {
                     $parsedDate = $this->parseDate($dateValue);
-                    
                     // Compare with target date - only process records matching the target date
                     if (!$parsedDate || $dateValue !== $targetDateString) {
                         continue;
@@ -172,6 +172,7 @@ class GoogleSheetsController extends Controller
                 } catch (\Exception $e) {
                     continue;
                 }
+
 
                 // Clean and validate actual_bt_tide
                 $actualBtTideValue = null;
@@ -181,14 +182,16 @@ class GoogleSheetsController extends Controller
                         $actualBtTideValue = (float) $cleanedValue;
                     }
                 }
+               
 
                 // Check if record already exists
                 $existingRecord = SheetData::where('date', $parsedDate->format('Y-m-d'))
                     ->where('cus_no', $cusNo)
                     ->where('sheet_name', $sheetName)
                     ->first();
-
+           
                 if ($existingRecord) {
+ 
                     // Update existing record
                     $existingRecord->update([
                         'actual_bt_tide' => $actualBtTideValue
@@ -208,7 +211,7 @@ class GoogleSheetsController extends Controller
 
             // Sync bank transfer data
             $bankTransferResult = $this->syncBankTransferSheet($targetDate);
-            
+
             return response()->json([
                 'success' => true,
                 'message' => "Data synced successfully for {$targetDate->format('Y-m-d')}",
@@ -356,7 +359,6 @@ class GoogleSheetsController extends Controller
                 'message' => 'Bank Transfer data synced successfully',
                 'synced_records' => $syncedBtCount
             ];
-
         } catch (\Exception $e) {
             return [
                 'success' => false,
@@ -482,7 +484,7 @@ class GoogleSheetsController extends Controller
                     OnboardingSheetData::create($recordData);
                     $createdCount++;
                 }
-                
+
                 $syncedCount++;
             }
 
@@ -495,10 +497,9 @@ class GoogleSheetsController extends Controller
                     'updated' => $updatedCount
                 ]
             ]);
-
         } catch (\Exception $e) {
             Log::error('Error syncing onboarding data: ' . $e->getMessage());
-            
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error syncing onboarding data',
