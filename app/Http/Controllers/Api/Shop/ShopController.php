@@ -70,7 +70,7 @@ class ShopController extends Controller
             })
           
             ->orderBy('created_at', 'desc')
-            ->with(['onboardingSheetData:id,shop_id,qr_trx,referral'])
+            ->with(['onboardingSheetData:phone,qr_trx,referral'])
             ->paginate(20)
             ->through(function ($shop) {
                 $shop['qr_trx'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->qr_trx : 0;
