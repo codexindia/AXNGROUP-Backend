@@ -19,8 +19,11 @@ class BankTransfer extends Model
         'amount_change_remark',
         'reject_remark',
     ];
+    
 
     protected $casts = [
+        'created_at' => 'datetime:Y-m-d H:i:s',
+        'updated_at' => 'datetime:Y-m-d H:i:s',
         'amount' => 'decimal:2',
     ];
 
