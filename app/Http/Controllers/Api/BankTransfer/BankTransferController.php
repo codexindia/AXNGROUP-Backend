@@ -84,33 +84,33 @@ class BankTransferController extends Controller
     }
 
     public function getByAgent(Request $request)
-{
-    $startDate = $request->input('start_date');
-    $endDate   = $request->input('end_date');
+    {
+        $startDate = $request->input('start_date');
+        $endDate   = $request->input('end_date');
 
-    $bankTransfers = BankTransfer::where('agent_id', $request->user()->id)
-        ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-            $start = \Carbon\Carbon::parse($startDate)->startOfDay()->timezone('UTC');
-            $end   = \Carbon\Carbon::parse($endDate)->endOfDay()->timezone('UTC');
-            return $query->whereBetween('created_at', [$start, $end]);
-        })
-        ->when($startDate && !$endDate, function ($query) use ($startDate) {
-            $start = \Carbon\Carbon::parse($startDate)->startOfDay()->timezone('UTC');
-            return $query->where('created_at', '>=', $start);
-        })
-        ->when(!$startDate && $endDate, function ($query) use ($endDate) {
-            $end = \Carbon\Carbon::parse($endDate)->endOfDay()->timezone('UTC');
-            return $query->where('created_at', '<=', $end);
-        })
-        ->orderBy('created_at', 'desc')
-        ->paginate(20);
+        $bankTransfers = BankTransfer::where('agent_id', $request->user()->id)
+            // ->with(['agent.parent'])
+            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+                $start = \Carbon\Carbon::parse($startDate)->startOfDay();
+                $end   = \Carbon\Carbon::parse($endDate)->endOfDay();
+                return $query->whereBetween('created_at', [$start, $end]);
+            })
+            ->when($startDate && !$endDate, function ($query) use ($startDate) {
+                $start = \Carbon\Carbon::parse($startDate)->startOfDay();
+                return $query->where('created_at', '>=', $start);
+            })
+            ->when(!$startDate && $endDate, function ($query) use ($endDate) {
+                $end = \Carbon\Carbon::parse($endDate)->endOfDay();
+                return $query->where('created_at', '<=', $end);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
 
-    return response()->json([
-        'success' => true,
-        'data' => $bankTransfers
-    ]);
-}
-
+        return response()->json([
+            'success' => true,
+            'data' => $bankTransfers,
+        ]);
+    }
 
 
     public function getByLeader(Request $request)
