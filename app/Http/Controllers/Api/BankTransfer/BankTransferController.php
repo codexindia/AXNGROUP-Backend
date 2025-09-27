@@ -85,14 +85,24 @@ class BankTransferController extends Controller
 
     public function getByAgent(Request $request)
     {
-        //date filter added
+        // Date filter using 'between'
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
         $bankTransfers = BankTransfer::where('agent_id', $request->user()->id)
-           // ->with(['agent.parent'])
-            ->when($startDate, fn($query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn($query) => $query->where('created_at', '<', \Carbon\Carbon::parse($endDate)->addDay()->format('Y-m-d')))
+            // ->with(['agent.parent'])
+            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+            $query->whereBetween('created_at', [
+                $startDate,
+                \Carbon\Carbon::parse($endDate)->endOfDay()->format('Y-m-d H:i:s')
+            ]);
+            })
+            ->when($startDate && !$endDate, function ($query) use ($startDate) {
+            $query->whereDate('created_at', '>=', $startDate);
+            })
+            ->when(!$startDate && $endDate, function ($query) use ($endDate) {
+            $query->where('created_at', '<=', \Carbon\Carbon::parse($endDate)->endOfDay()->format('Y-m-d H:i:s'));
+            })
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
