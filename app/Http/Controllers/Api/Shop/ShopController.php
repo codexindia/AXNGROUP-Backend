@@ -57,6 +57,9 @@ class ShopController extends Controller
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date')??date('Y-m-d');
 
+        return  \Carbon\Carbon::parse($startDate)->startOfDay().' '. \Carbon\Carbon::parse($endDate)->endOfDay();
+               
+
       
 
         $shops = Shop::where('agent_id', $request->user()->id)
