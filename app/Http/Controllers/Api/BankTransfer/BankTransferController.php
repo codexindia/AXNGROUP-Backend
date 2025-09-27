@@ -98,7 +98,7 @@ class BankTransferController extends Controller
                 ])
             )
             ->latest('created_at')
-            ->get();
+            ->paginate(20);
 
         return response()->json([
             'success' => true,
