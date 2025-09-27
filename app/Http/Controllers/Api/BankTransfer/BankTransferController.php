@@ -87,7 +87,8 @@ class BankTransferController extends Controller
     {
         $startDate = $request->input('start_date');
         $endDate   = $request->input('end_date');
-
+return  \Carbon\Carbon::parse($startDate)->startOfDay().' '. \Carbon\Carbon::parse($endDate)->endOfDay();
+        
         $bankTransfers = BankTransfer::where('agent_id', $request->user()->id)
             // ->with(['agent.parent'])
             ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
