@@ -95,14 +95,7 @@ class BankTransferController extends Controller
                 $end   = \Carbon\Carbon::parse($endDate)->endOfDay();
                 return $query->whereBetween('created_at', [$start, $end]);
             })
-            ->when($startDate && !$endDate, function ($query) use ($startDate) {
-                $start = \Carbon\Carbon::parse($startDate)->startOfDay();
-                return $query->where('created_at', '>=', $start);
-            })
-            ->when(!$startDate && $endDate, function ($query) use ($endDate) {
-                $end = \Carbon\Carbon::parse($endDate)->endOfDay();
-                return $query->where('created_at', '<=', $end);
-            })
+           
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
