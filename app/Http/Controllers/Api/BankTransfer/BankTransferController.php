@@ -9,6 +9,7 @@ use App\Models\SheetData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Services\PayoutService;
+use Carbon\Carbon;
 
 class BankTransferController extends Controller
 {
@@ -86,15 +87,18 @@ class BankTransferController extends Controller
     public function getByAgent(Request $request)
     {
         $startDate = $request->input('start_date');
-        $endDate   = $request->input('end_date')??date('Y-m-d');
+        $endDate   = $request->input('end_date') ?? date('Y-m-d');
         $bankTransfers = BankTransfer::where('agent_id', $request->user()->id)
-            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-                $start = \Carbon\Carbon::parse($startDate)->startOfDay();
-                $end = \Carbon\Carbon::parse($endDate)->endOfDay();
-                return $query->whereDateBetween('created_at', [$start, $end]);
-            })
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->when(
+                $startDate && $endDate,
+                fn($query) =>
+                $query->whereBetween('created_at', [
+                    Carbon::parse($startDate)->startOfDay(),
+                    Carbon::parse($endDate)->endOfDay()
+                ])
+            )
+            ->latest('created_at')
+            ->get();
 
         return response()->json([
             'success' => true,
