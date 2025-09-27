@@ -59,7 +59,9 @@ class ShopController extends Controller
 
         $shops = Shop::where('agent_id', $request->user()->id)
             ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-            return $query->whereBetween('created_at', [$startDate, $endDate]);
+                  $start = \Carbon\Carbon::parse($startDate)->startOfDay();
+                $end   = \Carbon\Carbon::parse($endDate)->endOfDay();
+            return $query->whereBetween('created_at', [$start, $end]);
             })
             ->when($startDate && !$endDate, function ($query) use ($startDate) {
             return $query->where('created_at', '>=', $startDate);
