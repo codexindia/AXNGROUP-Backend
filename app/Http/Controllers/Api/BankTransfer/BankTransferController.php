@@ -92,7 +92,7 @@ class BankTransferController extends Controller
         $bankTransfers = BankTransfer::where('agent_id', $request->user()->id)
            // ->with(['agent.parent'])
             ->when($startDate, fn($query) => $query->whereDate('created_at', '>=', $startDate))
-            ->when($endDate, fn($query) => $query->whereDate('created_at', '<=', $endDate))
+            ->when($endDate, fn($query) => $query->where('created_at', '<', \Carbon\Carbon::parse($endDate)->addDay()->format('Y-m-d')))
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
