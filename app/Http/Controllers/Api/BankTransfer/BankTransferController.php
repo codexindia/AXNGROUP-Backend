@@ -7,7 +7,6 @@ use App\Models\BankTransfer;
 use App\Models\MonthlyBtSheetData;
 use App\Models\SheetData;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Services\PayoutService;
 use Carbon\Carbon;
@@ -87,7 +86,7 @@ class BankTransferController extends Controller
 
     public function getByAgent(Request $request)
     {
-        DB::enableQueryLog();
+        
         $startDate = $request->input('start_date');
         $endDate   = $request->input('end_date') ?? date('Y-m-d');
         $bankTransfers = BankTransfer::where('agent_id', $request->user()->id)
@@ -101,7 +100,7 @@ class BankTransferController extends Controller
             )
             ->latest('created_at')
             ->paginate(20);
-dd(DB::getQueryLog());
+
         return response()->json([
             'success' => true,
             'data' => $bankTransfers,
