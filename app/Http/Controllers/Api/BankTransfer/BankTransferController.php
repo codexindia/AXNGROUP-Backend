@@ -83,24 +83,23 @@ class BankTransferController extends Controller
         ], 201);
     }
 
-   public function getByAgent(Request $request)
+    public function getByAgent(Request $request)
 {
     $startDate = $request->input('start_date');
     $endDate   = $request->input('end_date');
 
     $bankTransfers = BankTransfer::where('agent_id', $request->user()->id)
-        // ->with(['agent.parent'])
         ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-            $start = \Carbon\Carbon::parse($startDate)->startOfDay();
-            $end   = \Carbon\Carbon::parse($endDate)->endOfDay();
+            $start = \Carbon\Carbon::parse($startDate)->startOfDay()->timezone('UTC');
+            $end   = \Carbon\Carbon::parse($endDate)->endOfDay()->timezone('UTC');
             return $query->whereBetween('created_at', [$start, $end]);
         })
         ->when($startDate && !$endDate, function ($query) use ($startDate) {
-            $start = \Carbon\Carbon::parse($startDate)->startOfDay();
+            $start = \Carbon\Carbon::parse($startDate)->startOfDay()->timezone('UTC');
             return $query->where('created_at', '>=', $start);
         })
         ->when(!$startDate && $endDate, function ($query) use ($endDate) {
-            $end = \Carbon\Carbon::parse($endDate)->endOfDay();
+            $end = \Carbon\Carbon::parse($endDate)->endOfDay()->timezone('UTC');
             return $query->where('created_at', '<=', $end);
         })
         ->orderBy('created_at', 'desc')
@@ -108,9 +107,10 @@ class BankTransferController extends Controller
 
     return response()->json([
         'success' => true,
-        'data' => $bankTransfers,
+        'data' => $bankTransfers
     ]);
 }
+
 
 
     public function getByLeader(Request $request)
