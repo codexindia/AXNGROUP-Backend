@@ -16,7 +16,7 @@ class Shop extends Model
         'status',
         'reject_remark',
     ];
- protected $casts = [
+    protected $casts = [
         'created_at' => 'datetime:Y-m-d H:i:s',
         'updated_at' => 'datetime:Y-m-d H:i:s',
         'deleted_at' => 'datetime:Y-m-d H:i:s',
@@ -34,6 +34,5 @@ class Shop extends Model
     public function onboardingSheetData()
     {
         return $this->hasOne(OnboardingSheetData::class, 'phone', 'customer_mobile');
-                   
     }
 }

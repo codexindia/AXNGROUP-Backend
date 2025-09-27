@@ -25,6 +25,7 @@ return new class extends Migration
             $table->index(['agent_id']);
             $table->index(['team_leader_id']);
             $table->index(['status']);
+            
         });
     }
 
