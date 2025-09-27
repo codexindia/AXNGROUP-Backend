@@ -53,28 +53,28 @@ class ShopController extends Controller
 
     public function getByAgent(Request $request)
     {
-        //date filter added
+        // Date filter using "between" if both dates are provided
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
 
         $shops = Shop::where('agent_id', $request->user()->id)
-            //  ->with(['agent']) // Load only agent (do not include parent/leader)
-            ->when($startDate, function ($query) use ($startDate) {
-                return $query->where('created_at', '>=', $startDate);
+            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
+            return $query->whereBetween('created_at', [$startDate, $endDate]);
             })
-            ->when($endDate, function ($query) use ($endDate) {
-                return $query->where('created_at', '<=', $endDate);
+            ->when($startDate && !$endDate, function ($query) use ($startDate) {
+            return $query->where('created_at', '>=', $startDate);
+            })
+            ->when(!$startDate && $endDate, function ($query) use ($endDate) {
+            return $query->where('created_at', '<=', $endDate);
             })
             ->orderBy('created_at', 'desc')
-           
             ->with(['onboardingSheetData'])
             ->paginate(20)
             ->through(function ($shop) {
-                // Use the correct relationship name (camelCase)
-                $shop['qr_trx'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->qr_trx : 0;
-                $shop['s_referral'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->referral : null;
-                unset($shop->onboardingSheetData);
-                return $shop;
+            $shop['qr_trx'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->qr_trx : 0;
+            $shop['s_referral'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->referral : null;
+            unset($shop->onboardingSheetData);
+            return $shop;
             });
 
         return response()->json([
