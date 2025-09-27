@@ -55,7 +55,9 @@ class ShopController extends Controller
     {
         // Date filter using "between" if both dates are provided
         $startDate = $request->input('start_date');
-        $endDate = $request->input('end_date');
+        $endDate = $request->input('end_date')??date('Y-m-d');
+
+      
 
         $shops = Shop::where('agent_id', $request->user()->id)
             ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
@@ -63,12 +65,7 @@ class ShopController extends Controller
                 $end   = \Carbon\Carbon::parse($endDate)->endOfDay();
                 return $query->whereBetween('created_at', [$start, $end]);
             })
-            ->when($startDate && !$endDate, function ($query) use ($startDate) {
-                return $query->where('created_at', '>=', $startDate);
-            })
-            ->when(!$startDate && $endDate, function ($query) use ($endDate) {
-                return $query->where('created_at', '<=', $endDate);
-            })
+          
             ->orderBy('created_at', 'desc')
             ->with(['onboardingSheetData'])
             ->paginate(20)
