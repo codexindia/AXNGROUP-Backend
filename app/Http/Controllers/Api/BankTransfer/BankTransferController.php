@@ -86,7 +86,7 @@ class BankTransferController extends Controller
     public function getByAgent(Request $request)
     {
         $startDate = $request->input('start_date');
-        $endDate   = $request->input('end_date');
+        $endDate   = $request->input('end_date')??date('Y-m-d');
        
         $bankTransfers = BankTransfer::where('agent_id', $request->user()->id)
             // ->with(['agent.parent'])
