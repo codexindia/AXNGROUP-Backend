@@ -59,24 +59,24 @@ class ShopController extends Controller
 
         $shops = Shop::where('agent_id', $request->user()->id)
             ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-                  $start = \Carbon\Carbon::parse($startDate)->startOfDay();
+                $start = \Carbon\Carbon::parse($startDate)->startOfDay();
                 $end   = \Carbon\Carbon::parse($endDate)->endOfDay();
-            return $query->whereBetween('created_at', [$start, $end]);
+                return $query->whereBetween('created_at', [$start, $end]);
             })
             ->when($startDate && !$endDate, function ($query) use ($startDate) {
-            return $query->where('created_at', '>=', $startDate);
+                return $query->where('created_at', '>=', $startDate);
             })
             ->when(!$startDate && $endDate, function ($query) use ($endDate) {
-            return $query->where('created_at', '<=', $endDate);
+                return $query->where('created_at', '<=', $endDate);
             })
             ->orderBy('created_at', 'desc')
             ->with(['onboardingSheetData'])
             ->paginate(20)
             ->through(function ($shop) {
-            $shop['qr_trx'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->qr_trx : 0;
-            $shop['s_referral'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->referral : null;
-            unset($shop->onboardingSheetData);
-            return $shop;
+                $shop['qr_trx'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->qr_trx : 0;
+                $shop['s_referral'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->referral : null;
+                unset($shop->onboardingSheetData);
+                return $shop;
             });
 
         return response()->json([
