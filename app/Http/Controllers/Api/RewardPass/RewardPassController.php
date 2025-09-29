@@ -68,18 +68,18 @@ class RewardPassController extends Controller
      */
     public function getByAgent(Request $request)
     {
-        //date filter using between
-        $dateFrom = $request->query('start_date');
-        $dateTo = $request->query('end_date');
-
+        //date filter function
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date') ?? date('Y-m-d');
         $rewardPasses = RewardPass::where('agent_id', $request->user()->id)
-                                 ->when($dateFrom && $dateTo, function ($query) use ($dateFrom, $dateTo) {
-                                     $start = Carbon::parse($dateFrom)->startOfDay();
-                                     $end = Carbon::parse($dateTo)->endOfDay();
-                                    $query->whereBetween('created_at', [$start, $end]);
-                                 })
-                                 ->orderBy('created_at', 'desc')
-                                 ->paginate(20);
+            ->when($startDate, function ($query) use ($startDate) {
+                $query->whereDate('created_at', '>=', Carbon::parse($startDate)->startOfDay());
+            })
+            ->when($endDate, function ($query) use ($endDate) {
+                $query->whereDate('created_at', '<=', Carbon::parse($endDate)->endOfDay());
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
 
         return response()->json([
             'success' => true,
@@ -103,9 +103,9 @@ class RewardPassController extends Controller
         $agentIds = $request->user()->agents()->pluck('id');
 
         $rewardPasses = RewardPass::whereIn('agent_id', $agentIds)
-                                 ->with(['agent:id,name'])
-                                 ->orderBy('created_at', 'desc')
-                                 ->paginate(20);
+            ->with(['agent:id,name'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
 
         return response()->json([
             'success' => true,
@@ -132,7 +132,7 @@ class RewardPassController extends Controller
         $isAgentOwner = $rewardPass->agent_id === $user->id;
         $isTeamLeader = $user->role === 'leader' && $rewardPass->agent->parent_id === $user->id;
         $isAdmin = in_array($user->role, ['admin']);
-        
+
         if (!$isAgentOwner && !$isTeamLeader && !$isAdmin) {
             return response()->json([
                 'success' => false,
@@ -205,13 +205,13 @@ class RewardPassController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('customer_name', 'like', "%{$search}%")
-                  ->orWhere('customer_mobile', 'like', "%{$search}%")
-                  ->orWhereHas('agent', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('agent.parent', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhere('customer_mobile', 'like', "%{$search}%")
+                    ->orWhereHas('agent', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('agent.parent', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -296,9 +296,9 @@ class RewardPassController extends Controller
     public function getPendingForAdmin()
     {
         $rewardPasses = RewardPass::where('status', 'pending')
-                                 ->with(['agent.parent'])
-                                 ->orderBy('created_at', 'asc')
-                                 ->paginate(20);
+            ->with(['agent.parent'])
+            ->orderBy('created_at', 'asc')
+            ->paginate(20);
 
         return response()->json([
             'success' => true,
