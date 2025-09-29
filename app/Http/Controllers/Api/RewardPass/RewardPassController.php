@@ -68,7 +68,16 @@ class RewardPassController extends Controller
      */
     public function getByAgent(Request $request)
     {
+        //date filter using between
+        $dateFrom = $request->query('start_date');
+        $dateTo = $request->query('end_date');
+
         $rewardPasses = RewardPass::where('agent_id', $request->user()->id)
+                                 ->when($dateFrom && $dateTo, function ($query) use ($dateFrom, $dateTo) {
+                                     $start = Carbon::parse($dateFrom)->startOfDay();
+                                     $end = Carbon::parse($dateTo)->endOfDay();
+                                    $query->whereBetween('created_at', [$start, $end]);
+                                 })
                                  ->orderBy('created_at', 'desc')
                                  ->paginate(20);
 
