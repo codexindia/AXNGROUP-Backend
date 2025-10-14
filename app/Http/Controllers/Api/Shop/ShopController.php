@@ -447,7 +447,7 @@ class ShopController extends Controller
     public function adminApproval(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'status' => 'required|in:approved,rejected',
+            'status' => 'required|in:approved,rejected,pending',
             'admin_remark' => 'nullable|string'
         ]);
 
