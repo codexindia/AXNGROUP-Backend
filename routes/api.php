@@ -168,6 +168,10 @@ Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
         Route::post('/save-multiple', [SettingsController::class, 'saveMultipleSettings']);
         Route::delete('/delete', [SettingsController::class, 'deleteSetting']);
         Route::post('/toggle', [SettingsController::class, 'toggleSetting']);
+       
+    });
+    Route::prefix('/user-management', )->controller(App\Http\Controllers\Api\UserManagment::class)->group(function () {
+        Route::post('/change-password', 'changePassword'); // List all users
     });
     // Google Sheets Integration Routes
     Route::prefix('google-sheets')->group(function () {
