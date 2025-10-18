@@ -476,13 +476,13 @@ class ShopController extends Controller
             ], 404);
         }
 
-        // Shop must be pending
-        if ($shop->status !== 'pending') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Shop has already been processed'
-            ], 400);
-        }
+        // // Shop must be pending
+        // if ($shop->status !== 'pending') {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Shop has already been processed'
+        //     ], 400);
+        // }
 
         $shop->update([
             'status' => $request->status,
