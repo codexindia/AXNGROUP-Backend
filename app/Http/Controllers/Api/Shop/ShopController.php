@@ -211,6 +211,7 @@ class ShopController extends Controller
         $perPage = $request->get('per_page', 20);
         $shops = $query->orderBy('created_at', 'desc')->paginate($perPage)->through(function ($shop) {
             // Use the correct relationship name (camelCase)
+             $shop['onboarding_date'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->date : null;
             $shop['qr_trx'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->qr_trx : 0;
             $shop['s_referral'] = $shop->onboardingSheetData ? $shop->onboardingSheetData->referral : null;
             unset($shop->onboardingSheetData);
@@ -476,13 +477,7 @@ class ShopController extends Controller
             ], 404);
         }
 
-        // // Shop must be pending
-        // if ($shop->status !== 'pending') {
-        //     return response()->json([
-        //         'success' => false,
-        //         'message' => 'Shop has already been processed'
-        //     ], 400);
-        // }
+       
 
         $shop->update([
             'status' => $request->status,
