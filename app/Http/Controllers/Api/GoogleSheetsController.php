@@ -122,7 +122,7 @@ class GoogleSheetsController extends Controller
             // Find column indexes
             $dateColumnIndex = $this->findColumnIndex($headers, ['date', 'Date', 'DATE', 'created_at', 'Created_At', 'timestamp', 'Timestamp']);
             $cusNoColumnIndex = $this->findColumnIndex($headers, ['Cus No', 'customer_no', 'Customer_No', 'mobile', 'Mobile', 'phone', 'Phone', 'contact', 'Contact']);
-            $actualBtTideColumnIndex = $this->findColumnIndex($headers, ['actual_bt_tide', 'ACTUAL_BT_TIDE', 'Actual_BT_Tide', 'bt_tide', 'BT_TIDE', 'Bt_Tide']);
+            $actualBtTideColumnIndex = $this->findColumnIndex($headers, ['actual_bt_tide', 'ACTUAL BT_TIDE', 'Actual_BT_Tide', 'bt_tide', 'BT_TIDE', 'Bt_Tide']);
 
             if ($dateColumnIndex === null) {
                 return response()->json([
