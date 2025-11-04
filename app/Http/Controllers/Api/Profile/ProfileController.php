@@ -55,25 +55,12 @@ class ProfileController extends Controller
 
     public function getProfile(Request $request)
     {
-        $user = $request->user()->load('kycVerification');
-       $employee_id = 
-        // Get agent photo from KYC verification profile_photo_url, fallback to profile agent_photo
-        $agentPhotoUrl = null;
-        if ($user->kycVerification && $user->kycVerification->profile_photo) {
-            $agentPhotoUrl = Storage::disk('public')->url($user->kycVerification->profile_photo);
-        } elseif ($user->profile && $user->profile->agent_photo) {
-            $agentPhotoUrl = Storage::disk('public')->url($user->profile->agent_photo);
-        }
-
-        $response = $user->toArray();
-        $response['agent_photo'] = $agentPhotoUrl;
-        
-        $response['id_verification_link'] = 'https://example.com/kyc/' . ($user->kycVerification ? $user->kycVerification->id : 'new');
-        unset($response['kyc_verification']); // Remove internal path
+        $user = $request->user();
+    
 
         return response()->json([
             'success' => true,
-            'data' => $response
+            'data' => $user
         ]);
     }
 

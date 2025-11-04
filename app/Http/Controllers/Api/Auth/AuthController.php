@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Api\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Carbon\Carbon;
 
 class AuthController extends Controller
 {
@@ -296,4 +298,56 @@ class AuthController extends Controller
             'data' => $userData
         ]);
     }
+  
+public function verifyIdCard($uniqueId): JsonResponse
+{
+    $user = User::where('unique_id', $uniqueId)
+                ->with('profile')
+                ->first();
+
+    if (!$user) {
+        return response()->json([
+            'success' => false,
+            'message' => 'ID card not found',
+            'error' => 'Invalid ID card number'
+        ], 404);
+    }
+
+    // Check if user has a profile with ID card validity
+    if (!$user->profile || !$user->profile->id_card_validity) {
+        return response()->json([
+            'success' => false,
+            'message' => 'ID card not issued',
+            'error' => 'This ID card has not been issued yet'
+        ], 404);
+    }
+
+    $validUntil = Carbon::parse($user->profile->id_card_validity);
+    $isExpired = $validUntil->isPast();
+
+    // Add ID card status
+    $idCardStatus = $isExpired ? 'expired' : 'active';
+
+    return response()->json([
+        'success' => true,
+        'message' => 'ID card verified successfully',
+        'data' => [
+            'unique_id' => $user->unique_id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'mobile' => $user->mobile,
+            'role' => ucfirst($user->role),
+            'profile_photo' => $user->profile->user_photo 
+                ? url('storage/' . $user->profile->user_photo) 
+                : null,
+            'blood_group' => $user->profile->blood_group,
+            'valid_until' => $validUntil->format('d M Y'),
+            'issued_date' => $user->profile->created_at->format('d M Y'),
+            'status' => $idCardStatus,
+            'is_expired' => $isExpired,
+            'days_remaining' => $isExpired ? 0 : $validUntil->diffInDays(now()),
+            'is_blocked' => $user->is_blocked
+        ]
+    ]);
+}
 }

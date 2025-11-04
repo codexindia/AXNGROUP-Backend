@@ -281,6 +281,27 @@ class AdminController extends Controller
             'statistics' => $stats
         ]);
     }
+public function getPrimaryDomain()
+{
+    $host = request()->getHost(); // e.g. app.example.com
+
+    // Split the host by dots
+    $parts = explode('.', $host);
+
+    // Handle scenarios like sub.sub.example.com or example.co.in
+    if (count($parts) >= 2) {
+        // For simple domains like example.com
+        $primaryDomain = implode('.', array_slice($parts, -2));
+    }else {
+        // Fallback to the original host if it doesn't have at least two parts
+        $primaryDomain = $host;
+    }
+
+    // You can enhance this to handle TLDs like .co.in
+    // Add special logic if needed
+
+    return $primaryDomain; // example.com
+}
 
     /**
      * Helper method to add ID card information to user object
@@ -304,7 +325,7 @@ class AdminController extends Controller
 
                 $idCardDetails = [
                     'unique_id' => $user->unique_id,
-                    'verify_url' => url('/verify-id-card/' . encrypt($user->unique_id)),
+                    'verify_url' => 'https://'.$this->getPrimaryDomain() . '/verify/check-id.html/' . $user->unique_id,
                     'profile_photo' => $user->profile->user_photo 
                         ? url('storage/' . $user->profile->user_photo) 
                         : null,
