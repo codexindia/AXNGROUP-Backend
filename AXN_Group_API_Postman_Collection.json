@@ -1,31 +1,11 @@
 {
 	"info": {
-		"_postman_id": "axn-group-api-collection-2024",
+		"_postman_id": "3bf2e0ca-bb91-42d7-931f-486970154572",
 		"name": "AXN Group API Collection",
 		"description": "Complete API collection for AXN Group application with proper organization for frontend developers",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-	},
-	"variable": [
-		{
-			"key": "base_url",
-			"value": "https://api.axnpay.com/api",
-			"type": "string"
-		},
-		{
-			"key": "token",
-			"value": "",
-			"type": "string"
-		}
-	],
-	"auth": {
-		"type": "bearer",
-		"bearer": [
-			{
-				"key": "token",
-				"value": "{{token}}",
-				"type": "string"
-			}
-		]
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23818975",
+		"_collection_link": "https://lively-water-534598.postman.co/workspace/Codexindia~41083d4e-91d0-4a4d-9003-6f1e12d195cb/collection/23818975-3bf2e0ca-bb91-42d7-931f-486970154572?action=share&source=collection_link&creator=23818975"
 	},
 	"item": [
 		{
@@ -47,14 +27,21 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"mobile\": \"9876543210\",\n    \"password\": \"password123\"\n}"
+							"raw": "{\n    \"mobile\": \"9999999999\",\n    \"password\": \"password\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/login/admin",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "login", "admin"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login",
+								"admin"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Login - Leader",
@@ -72,14 +59,21 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"mobile\": \"9876543210\",\n    \"password\": \"password123\"\n}"
+							"raw": "{\n    \"mobile\": \"8888888888\",\n    \"password\": \"password123\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/login/leader",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "login", "leader"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login",
+								"leader"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Login - Agent",
@@ -97,14 +91,21 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"mobile\": \"9876543210\",\n    \"password\": \"password123\"\n}"
+							"raw": "{\n    \"mobile\": \"7777777777\",\n    \"password\": \"password123\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/login/agent",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "login", "agent"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login",
+								"agent"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Register Leader (Admin Only)",
@@ -126,10 +127,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/register/leader",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "register", "leader"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"register",
+								"leader"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Register Agent (Leader Only)",
@@ -151,10 +159,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/register/agent",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "register", "agent"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"register",
+								"agent"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get User Profile",
@@ -168,10 +183,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/auth/profile",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "profile"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"profile"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Logout",
@@ -185,10 +206,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/auth/logout",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "logout"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"logout"
+							]
 						}
-					}
+					},
+					"response": []
 				}
 			]
 		},
@@ -207,10 +234,15 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/profile",
-							"host": ["{{base_url}}"],
-							"path": ["profile"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"profile"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Update Profile",
@@ -232,10 +264,16 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/profile/update",
-							"host": ["{{base_url}}"],
-							"path": ["profile", "update"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"profile",
+								"update"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Add Bank Details",
@@ -257,10 +295,16 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/profile/bank-details",
-							"host": ["{{base_url}}"],
-							"path": ["profile", "bank-details"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"profile",
+								"bank-details"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get Bank Details",
@@ -274,10 +318,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/profile/bank-details",
-							"host": ["{{base_url}}"],
-							"path": ["profile", "bank-details"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"profile",
+								"bank-details"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Update Bank Details",
@@ -299,10 +349,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/profile/bank-details/1",
-							"host": ["{{base_url}}"],
-							"path": ["profile", "bank-details", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"profile",
+								"bank-details",
+								"1"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Delete Bank Details",
@@ -316,10 +373,17 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/profile/bank-details/1",
-							"host": ["{{base_url}}"],
-							"path": ["profile", "bank-details", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"profile",
+								"bank-details",
+								"1"
+							]
 						}
-					}
+					},
+					"response": []
 				}
 			]
 		},
@@ -338,10 +402,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/wallet/balance",
-							"host": ["{{base_url}}"],
-							"path": ["wallet", "balance"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"wallet",
+								"balance"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get Transaction History",
@@ -355,10 +425,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/wallet/transactions",
-							"host": ["{{base_url}}"],
-							"path": ["wallet", "transactions"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"wallet",
+								"transactions"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Request Withdrawal (Agent/Leader)",
@@ -380,10 +456,16 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/wallet/withdraw",
-							"host": ["{{base_url}}"],
-							"path": ["wallet", "withdraw"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"wallet",
+								"withdraw"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get Withdrawals",
@@ -397,13 +479,19 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/wallet/withdrawals",
-							"host": ["{{base_url}}"],
-							"path": ["wallet", "withdrawals"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"wallet",
+								"withdrawals"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
-					"name": "Credit Wallet (Admin/Leader)",
+					"name": "Credit Wallet Admin",
 					"request": {
 						"method": "POST",
 						"header": [
@@ -422,10 +510,16 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/wallet/credit",
-							"host": ["{{base_url}}"],
-							"path": ["wallet", "credit"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"wallet",
+								"credit"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get Payout History (Agent)",
@@ -439,10 +533,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/wallet/payouts",
-							"host": ["{{base_url}}"],
-							"path": ["wallet", "payouts"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"wallet",
+								"payouts"
+							]
 						}
-					}
+					},
+					"response": []
 				}
 			]
 		},
@@ -469,10 +569,15 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/shops",
-							"host": ["{{base_url}}"],
-							"path": ["shops"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"shops"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get My Shops (Agent)",
@@ -485,11 +590,27 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/shops/agent",
-							"host": ["{{base_url}}"],
-							"path": ["shops", "agent"]
+							"raw": "{{base_url}}/shops/agent?start_date=2025-09-27&end_date=2025-09-27",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"shops",
+								"agent"
+							],
+							"query": [
+								{
+									"key": "start_date",
+									"value": "2025-09-27"
+								},
+								{
+									"key": "end_date",
+									"value": "2025-09-27"
+								}
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get Team Shops (Leader)",
@@ -503,10 +624,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/shops/leader",
-							"host": ["{{base_url}}"],
-							"path": ["shops", "leader"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"shops",
+								"leader"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get Shop Details",
@@ -520,10 +647,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/shops/1",
-							"host": ["{{base_url}}"],
-							"path": ["shops", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"shops",
+								"1"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "📊 Admin - Onboarding History",
@@ -536,28 +669,28 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/shops/admin/onboarding-history",
-							"host": ["{{base_url}}"],
-							"path": ["shops", "admin", "onboarding-history"]
+							"raw": "{{base_url}}/shops/admin/onboarding-history?page=3&status=pending",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"shops",
+								"admin",
+								"onboarding-history"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "3"
+								},
+								{
+									"key": "status",
+									"value": "pending"
+								}
+							]
 						}
-					}
-				},
-				{
-					"name": "📊 Admin - Bank Transfer History",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/shops/admin/bank-transfer-history",
-							"host": ["{{base_url}}"],
-							"path": ["shops", "admin", "bank-transfer-history"]
-						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "📊 Admin - Daily Reports",
@@ -571,10 +704,17 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/shops/admin/daily-reports",
-							"host": ["{{base_url}}"],
-							"path": ["shops", "admin", "daily-reports"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"shops",
+								"admin",
+								"daily-reports"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "📋 Admin - Pending Approvals",
@@ -588,10 +728,17 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/shops/admin/pending",
-							"host": ["{{base_url}}"],
-							"path": ["shops", "admin", "pending"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"shops",
+								"admin",
+								"pending"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "✅ Admin - Approve/Reject Shop",
@@ -613,10 +760,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/shops/admin/1/approval",
-							"host": ["{{base_url}}"],
-							"path": ["shops", "admin", "1", "approval"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"shops",
+								"admin",
+								"1",
+								"approval"
+							]
 						}
-					}
+					},
+					"response": []
 				}
 			]
 		},
@@ -639,14 +794,19 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"shop_id\": 1,\n    \"amount\": 5000,\n    \"transaction_id\": \"TXN123456789\",\n    \"remarks\": \"Monthly transfer\"\n}"
+							"raw": "{\n    \"shop_id\": 1,\n  \n    \"transaction_id\": \"TXN123456789\",\n    \"remarks\": \"Monthly transfer\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/bank-transfers",
-							"host": ["{{base_url}}"],
-							"path": ["bank-transfers"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"bank-transfers"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get My Bank Transfers (Agent)",
@@ -659,11 +819,27 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/bank-transfers/agent",
-							"host": ["{{base_url}}"],
-							"path": ["bank-transfers", "agent"]
+							"raw": "{{base_url}}/bank-transfers/agent?start_date=2025-09-22&end_date=2025-09-22",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"bank-transfers",
+								"agent"
+							],
+							"query": [
+								{
+									"key": "start_date",
+									"value": "2025-09-22"
+								},
+								{
+									"key": "end_date",
+									"value": "2025-09-22"
+								}
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get Team Bank Transfers (Leader)",
@@ -677,10 +853,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/bank-transfers/leader",
-							"host": ["{{base_url}}"],
-							"path": ["bank-transfers", "leader"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"bank-transfers",
+								"leader"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get Bank Transfer Details",
@@ -694,10 +876,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/bank-transfers/1",
-							"host": ["{{base_url}}"],
-							"path": ["bank-transfers", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"bank-transfers",
+								"1"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "📋 Admin - Pending Bank Transfers",
@@ -711,10 +899,17 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/bank-transfers/admin/pending",
-							"host": ["{{base_url}}"],
-							"path": ["bank-transfers", "admin", "pending"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"bank-transfers",
+								"admin",
+								"pending"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "✅ Admin - Approve/Reject Bank Transfer",
@@ -736,10 +931,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/bank-transfers/admin/1/approval",
-							"host": ["{{base_url}}"],
-							"path": ["bank-transfers", "admin", "1", "approval"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"bank-transfers",
+								"admin",
+								"1",
+								"approval"
+							]
 						}
-					}
+					},
+					"response": []
 				}
 			]
 		},
@@ -766,10 +969,15 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/reward-passes",
-							"host": ["{{base_url}}"],
-							"path": ["reward-passes"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reward-passes"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get My Reward Passes (Agent)",
@@ -783,10 +991,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/reward-passes/agent",
-							"host": ["{{base_url}}"],
-							"path": ["reward-passes", "agent"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reward-passes",
+								"agent"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get Team Reward Passes (Leader)",
@@ -800,10 +1014,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/reward-passes/leader",
-							"host": ["{{base_url}}"],
-							"path": ["reward-passes", "leader"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reward-passes",
+								"leader"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get Reward Pass Details",
@@ -817,10 +1037,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/reward-passes/1",
-							"host": ["{{base_url}}"],
-							"path": ["reward-passes", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reward-passes",
+								"1"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "📋 Admin - All Reward Passes",
@@ -834,10 +1060,17 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/reward-passes/admin/all",
-							"host": ["{{base_url}}"],
-							"path": ["reward-passes", "admin", "all"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reward-passes",
+								"admin",
+								"all"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "📋 Admin - Pending Reward Passes",
@@ -851,10 +1084,17 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/reward-passes/admin/pending",
-							"host": ["{{base_url}}"],
-							"path": ["reward-passes", "admin", "pending"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reward-passes",
+								"admin",
+								"pending"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "✅ Admin - Approve/Reject Reward Pass",
@@ -876,10 +1116,18 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/reward-passes/admin/1/approval",
-							"host": ["{{base_url}}"],
-							"path": ["reward-passes", "admin", "1", "approval"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"reward-passes",
+								"admin",
+								"1",
+								"approval"
+							]
 						}
-					}
+					},
+					"response": []
 				}
 			]
 		},
@@ -927,10 +1175,16 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/kyc/submit",
-							"host": ["{{base_url}}"],
-							"path": ["kyc", "submit"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"kyc",
+								"submit"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get My KYC Status",
@@ -944,10 +1198,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/kyc/my-kyc",
-							"host": ["{{base_url}}"],
-							"path": ["kyc", "my-kyc"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"kyc",
+								"my-kyc"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "📋 Admin - All KYC Submissions",
@@ -961,10 +1221,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/kyc/all",
-							"host": ["{{base_url}}"],
-							"path": ["kyc", "all"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"kyc",
+								"all"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "📋 Admin - Pending KYC Reviews",
@@ -978,10 +1244,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/kyc/pending",
-							"host": ["{{base_url}}"],
-							"path": ["kyc", "pending"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"kyc",
+								"pending"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "📋 Admin - Get KYC Details",
@@ -995,10 +1267,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/kyc/1",
-							"host": ["{{base_url}}"],
-							"path": ["kyc", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"kyc",
+								"1"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "✅ Admin - Review KYC",
@@ -1020,10 +1298,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/kyc/1/review",
-							"host": ["{{base_url}}"],
-							"path": ["kyc", "1", "review"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"kyc",
+								"1",
+								"review"
+							]
 						}
-					}
+					},
+					"response": []
 				}
 			]
 		},
@@ -1042,10 +1327,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/statistics/agent",
-							"host": ["{{base_url}}"],
-							"path": ["statistics", "agent"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"statistics",
+								"agent"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Leader Team Statistics",
@@ -1059,10 +1350,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/statistics/leader",
-							"host": ["{{base_url}}"],
-							"path": ["statistics", "leader"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"statistics",
+								"leader"
+							]
 						}
-					}
+					},
+					"response": []
 				}
 			]
 		},
@@ -1081,10 +1378,18 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/relationships/leader/1/agents",
-							"host": ["{{base_url}}"],
-							"path": ["relationships", "leader", "1", "agents"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"relationships",
+								"leader",
+								"1",
+								"agents"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get Leader Hierarchy",
@@ -1098,10 +1403,18 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/relationships/leader/1/hierarchy",
-							"host": ["{{base_url}}"],
-							"path": ["relationships", "leader", "1", "hierarchy"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"relationships",
+								"leader",
+								"1",
+								"hierarchy"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get Agent Bank Transfers",
@@ -1115,10 +1428,18 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/relationships/agent/1/bank-transfers",
-							"host": ["{{base_url}}"],
-							"path": ["relationships", "agent", "1", "bank-transfers"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"relationships",
+								"agent",
+								"1",
+								"bank-transfers"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Check Agent-Leader Relation",
@@ -1132,10 +1453,18 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/relationships/check-relation/1/2",
-							"host": ["{{base_url}}"],
-							"path": ["relationships", "check-relation", "1", "2"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"relationships",
+								"check-relation",
+								"1",
+								"2"
+							]
 						}
-					}
+					},
+					"response": []
 				}
 			]
 		},
@@ -1154,13 +1483,19 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/hierarchy/my-leaders",
-							"host": ["{{base_url}}"],
-							"path": ["hierarchy", "my-leaders"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"hierarchy",
+								"my-leaders"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
-					"name": "Get My Agents (Leader)",
+					"name": "Get My Agents (Leader And Admin)",
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1170,11 +1505,23 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/hierarchy/my-agents",
-							"host": ["{{base_url}}"],
-							"path": ["hierarchy", "my-agents"]
+							"raw": "{{base_url}}/hierarchy/my-agents?leader_id=2",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"hierarchy",
+								"my-agents"
+							],
+							"query": [
+								{
+									"key": "leader_id",
+									"value": "2"
+								}
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get My Parent",
@@ -1188,10 +1535,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/hierarchy/my-parent",
-							"host": ["{{base_url}}"],
-							"path": ["hierarchy", "my-parent"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"hierarchy",
+								"my-parent"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Get Complete Hierarchy (Admin)",
@@ -1205,10 +1558,16 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/hierarchy/complete",
-							"host": ["{{base_url}}"],
-							"path": ["hierarchy", "complete"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"hierarchy",
+								"complete"
+							]
 						}
-					}
+					},
+					"response": []
 				}
 			]
 		},
@@ -1227,10 +1586,15 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/settings",
-							"host": ["{{base_url}}"],
-							"path": ["settings"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"settings"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "📋 Admin - Get All Settings",
@@ -1244,10 +1608,17 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/admin/settings/all",
-							"host": ["{{base_url}}"],
-							"path": ["admin", "settings", "all"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"settings",
+								"all"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "📝 Admin - Save Setting",
@@ -1269,10 +1640,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/admin/settings/save",
-							"host": ["{{base_url}}"],
-							"path": ["admin", "settings", "save"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"settings",
+								"save"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "📝 Admin - Save Multiple Settings",
@@ -1294,10 +1672,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/admin/settings/save-multiple",
-							"host": ["{{base_url}}"],
-							"path": ["admin", "settings", "save-multiple"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"settings",
+								"save-multiple"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "🗑️ Admin - Delete Setting",
@@ -1319,10 +1704,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/admin/settings/delete",
-							"host": ["{{base_url}}"],
-							"path": ["admin", "settings", "delete"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"settings",
+								"delete"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "🔄 Admin - Toggle Setting",
@@ -1344,10 +1736,17 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/admin/settings/toggle",
-							"host": ["{{base_url}}"],
-							"path": ["admin", "settings", "toggle"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"settings",
+								"toggle"
+							]
 						}
-					}
+					},
+					"response": []
 				}
 			]
 		},
@@ -1356,6 +1755,9 @@
 			"item": [
 				{
 					"name": "Get Users List",
+					"protocolProfileBehavior": {
+						"disableBodyPruning": true
+					},
 					"request": {
 						"method": "GET",
 						"header": [
@@ -1364,12 +1766,34 @@
 								"value": "application/json"
 							}
 						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "type",
+									"value": "agents",
+									"type": "text"
+								}
+							]
+						},
 						"url": {
-							"raw": "{{base_url}}/admin/users",
-							"host": ["{{base_url}}"],
-							"path": ["admin", "users"]
+							"raw": "{{base_url}}/admin/users?type=agents",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"users"
+							],
+							"query": [
+								{
+									"key": "type",
+									"value": "agents"
+								}
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Toggle User Block/Unblock",
@@ -1391,10 +1815,124 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/admin/toggle-user-block",
-							"host": ["{{base_url}}"],
-							"path": ["admin", "toggle-user-block"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"toggle-user-block"
+							]
 						}
-					}
+					},
+					"response": []
+				},
+				{
+					"name": "Issue ID Card",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "user_id",
+									"value": "5",
+									"type": "text"
+								},
+								{
+									"key": "profile_photo",
+									"type": "file",
+									"src": []
+								},
+								{
+									"key": "valid_until",
+									"value": "2025-12-31",
+									"type": "text"
+								},
+								{
+									"key": "blood_group",
+									"value": "O+",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/issue-id-card",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"issue-id-card"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Renew ID Card",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"user_id\": 5,\n    \"valid_until\": \"2026-12-31\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/admin/renew-id-card",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"renew-id-card"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get ID Card Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/admin/id-card-details?user_id=5",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"admin",
+								"id-card-details"
+							],
+							"query": [
+								{
+									"key": "user_id",
+									"value": "5"
+								}
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -1417,14 +1955,20 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"sheet_name\": \"Daily Bank Transfer\",\n    \"date\": \"2024-09-09\"\n}"
+							"raw": "{\n    \"sheet_name\": \"Daily Bank Transfer\"\n   \n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/google-sheets/sync-today",
-							"host": ["{{base_url}}"],
-							"path": ["google-sheets", "sync-today"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"google-sheets",
+								"sync-today"
+							]
 						}
-					}
+					},
+					"response": []
 				},
 				{
 					"name": "Sync Onboarding Data (Admin/Leader)",
@@ -1446,35 +1990,16 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/google-sheets/sync-onboarding",
-							"host": ["{{base_url}}"],
-							"path": ["google-sheets", "sync-onboarding"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"google-sheets",
+								"sync-onboarding"
+							]
 						}
-					}
-				},
-				{
-					"name": "Webhook Endpoint (Public)",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Accept",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"sheet_name\": \"Bank Transfer\",\n    \"data\": [\n        {\n            \"date\": \"09/09/2024\",\n            \"cus_name\": \"John Doe\",\n            \"mobile_no\": \"9876543210\",\n            \"total_bank_transfer\": 5000\n        }\n    ],\n    \"row_numbers\": [2],\n    \"timestamp\": \"2024-09-09T10:30:00Z\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/google-sheets/webhook",
-							"host": ["{{base_url}}"],
-							"path": ["google-sheets", "webhook"]
-						}
-					}
+					},
+					"response": []
 				}
 			]
 		},
@@ -1493,14 +2018,57 @@
 						],
 						"url": {
 							"raw": "{{base_url}}/user",
-							"host": ["{{base_url}}"],
-							"path": ["user"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"user"
+							]
 						}
-					}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "UserManagement",
+			"item": [
+				{
+					"name": "Change Password",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/user-management/change-password",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"user-management",
+								"change-password"
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		}
 	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
 	"event": [
 		{
 			"listen": "prerequest",
@@ -1539,6 +2107,18 @@
 					"console.log('⏱️ Response time: ' + pm.response.responseTime + 'ms');"
 				]
 			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "https://api.axnpay.com/api",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
 		}
 	]
 }

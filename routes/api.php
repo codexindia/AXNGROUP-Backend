@@ -115,10 +115,6 @@ Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
     Route::prefix('profile')->group(function () {
         Route::get('/', [ProfileController::class, 'getProfile']);
         Route::post('/update', [ProfileController::class, 'updateProfile']);
-        Route::post('/bank-details', [ProfileController::class, 'addBankDetails']);
-        Route::get('/bank-details', [ProfileController::class, 'getBankDetails']);
-        Route::put('/bank-details/{id}', [ProfileController::class, 'updateBankDetails']);
-        Route::delete('/bank-details/{id}', [ProfileController::class, 'deleteBankDetails']);
     });
     
     // KYC Module
@@ -156,6 +152,9 @@ Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
     Route::prefix('admin')->middleware('role:admin')->group(function () {
         Route::post('/toggle-user-block', [AdminController::class, 'toggleUserBlock']);
         Route::get('/users', [AdminController::class, 'getUsersList']);
+        Route::post('/issue-id-card', [AdminController::class, 'issueIdCard']);
+    Route::post('/renew-id-card', [AdminController::class, 'renewIdCard']);
+    Route::get('/id-card-details', [AdminController::class, 'getIdCardDetails']);
     });
     
     // App Settings Routes

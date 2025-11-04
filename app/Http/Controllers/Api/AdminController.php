@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\UserProfile;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 
 class AdminController extends Controller
 {
@@ -127,9 +130,9 @@ class AdminController extends Controller
             $query->where('is_blocked', $request->boolean('is_blocked'));
         }
 
-        // Select fields and relationships
+        // Select fields and relationships - Include profile for ID card info
         $query->select(['id', 'unique_id', 'name', 'email', 'mobile', 'role', 'parent_id', 'is_blocked', 'created_at'])
-              ->with(['parent:id,name,unique_id']);
+              ->with(['parent:id,name,unique_id', 'profile:id,user_id,user_photo,id_card_validity,blood_group']);
 
         // Add counts for leaders and agents
         if ($request->type === 'leaders') {
@@ -139,7 +142,7 @@ class AdminController extends Controller
         $users = $query->orderBy('created_at', 'desc')
                       ->paginate($request->get('per_page', 20));
 
-        // Add performance counts after pagination
+        // Add performance counts and ID card status after pagination
         if ($request->type === 'leaders') {
             // Add team performance counts for leaders
             $users->getCollection()->transform(function ($leader) {
@@ -185,6 +188,9 @@ class AdminController extends Controller
                     $leader->monthly_shop_onboarding_count = 0;
                 }
 
+                // Add ID card information
+                $this->addIdCardInfo($leader);
+
                 return $leader;
             });
         } elseif ($request->type === 'agents') {
@@ -228,7 +234,16 @@ class AdminController extends Controller
                 $agent->monthly_shop_onboarding_count = $monthlyShopOnboardings;
                 $agent->total_shop_onboarding_count = $totalShopOnboardings;
 
+                // Add ID card information
+                $this->addIdCardInfo($agent);
+
                 return $agent;
+            });
+        } else {
+            // For 'all' type, just add ID card info
+            $users->getCollection()->transform(function ($user) {
+                $this->addIdCardInfo($user);
+                return $user;
             });
         }
 
@@ -264,6 +279,233 @@ class AdminController extends Controller
             'success' => true,
             'data' => $users,
             'statistics' => $stats
+        ]);
+    }
+
+    /**
+     * Helper method to add ID card information to user object
+     */
+    private function addIdCardInfo($user)
+    {
+        $idCardStatus = 'not_issued';
+        $idCardDetails = null;
+
+        if ($user->profile) {
+            $validUntil = $user->profile->id_card_validity 
+                ? Carbon::parse($user->profile->id_card_validity) 
+                : null;
+
+            if ($validUntil) {
+                if ($validUntil->isFuture()) {
+                    $idCardStatus = 'active';
+                } else {
+                    $idCardStatus = 'expired';
+                }
+
+                $idCardDetails = [
+                    'unique_id' => $user->unique_id,
+                    'verify_url' => url('/verify-id-card/' . encrypt($user->unique_id)),
+                    'profile_photo' => $user->profile->user_photo 
+                        ? url('storage/' . $user->profile->user_photo) 
+                        : null,
+                    'blood_group' => $user->profile->blood_group,
+                    'valid_until' => $validUntil->format('Y-m-d'),
+                    'days_remaining' => $validUntil->isFuture() 
+                        ? $validUntil->diffInDays(now()) 
+                        : 0
+                ];
+            }
+        }
+
+        $user->id_card_status = $idCardStatus; // 'not_issued', 'active', 'expired'
+        $user->id_card = $idCardDetails;
+
+        // Remove profile relation from response to avoid duplication
+        unset($user->profile);
+
+        return $user;
+    }
+
+    /**
+     * Issue ID Card to User
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function issueIdCard(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
+            'profile_photo' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
+            'valid_until' => 'required|date|after:today',
+            'blood_group' => 'nullable|string|in:A+,A-,B+,B-,AB+,AB-,O+,O-'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = User::find($request->user_id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        // Check if profile exists
+        $profile = UserProfile::where('user_id', $user->id)->first();
+
+        $profilePhotoPath = null;
+
+        // Handle profile photo upload
+        if ($request->hasFile('profile_photo')) {
+            // Delete old photo if exists
+            if ($profile && $profile->user_photo) {
+                Storage::disk('public')->delete($profile->user_photo);
+            }
+
+            $file = $request->file('profile_photo');
+            $fileName = 'profile_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $profilePhotoPath = $file->storeAs('profiles', $fileName, 'public');
+        } elseif ($profile && $profile->user_photo) {
+            // Keep existing photo if no new photo uploaded
+            $profilePhotoPath = $profile->user_photo;
+        }
+
+        // Create or update profile
+        $profileData = [
+            'user_id' => $user->id,
+            'id_card_validity' => $request->valid_until,
+            'blood_group' => $request->blood_group
+        ];
+
+        if ($profilePhotoPath) {
+            $profileData['user_photo'] = $profilePhotoPath;
+        }
+
+        if ($profile) {
+            $profile->update($profileData);
+        } else {
+            $profile = UserProfile::create($profileData);
+        }
+
+        // Get updated user with profile
+        $user->load('profile');
+        $this->addIdCardInfo($user);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'ID card issued successfully',
+            'data' => [
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'unique_id' => $user->unique_id,
+                'id_card_status' => $user->id_card_status,
+               // 'id_card' => $user->id_card
+            ]
+        ]);
+    }
+
+    /**
+     * Get ID Card Details for a User
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getIdCardDetails(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = User::with('profile')->find($request->user_id);
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found'
+            ], 404);
+        }
+
+        $this->addIdCardInfo($user);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'mobile' => $user->mobile,
+                'unique_id' => $user->unique_id,
+                'role' => $user->role,
+                'id_card_status' => $user->id_card_status,
+                'id_card' => $user->id_card
+            ]
+        ]);
+    }
+
+    /**
+     * Renew ID Card
+     *
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function renewIdCard(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'user_id' => 'required|exists:users,id',
+            'valid_until' => 'required|date|after:today'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $user = User::find($request->user_id);
+        $profile = UserProfile::where('user_id', $user->id)->first();
+
+        if (!$profile) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User does not have an ID card. Please issue a new card first.'
+            ], 404);
+        }
+
+        $profile->update([
+            'id_card_validity' => $request->valid_until
+        ]);
+
+        $user->load('profile');
+        $this->addIdCardInfo($user);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'ID card renewed successfully',
+            'data' => [
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'unique_id' => $user->unique_id,
+                'id_card_status' => $user->id_card_status,
+                'id_card' => $user->id_card
+            ]
         ]);
     }
 }

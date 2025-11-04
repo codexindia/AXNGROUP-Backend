@@ -12,11 +12,17 @@ return new class extends Migration
             $table->engine = 'InnoDB';
             $table->bigIncrements('id');
             $table->unsignedBigInteger('user_id');
-            $table->string('agent_photo')->nullable();
-            $table->string('aadhar_number')->nullable();
-            $table->string('pan_number')->nullable();
-            $table->string('address')->nullable();
+            $table->string('user_photo')->nullable();
             $table->date('dob')->nullable();
+            $table->date('id_card_validity')->nullable()->comment('in numeric date');
+            $table->string('blood_group')->nullable();
+            $table->string('address_line_1')->nullable();
+            $table->string('address_line_2')->nullable();
+            $table->string('city')->nullable();
+            $table->string('state')->nullable();
+            $table->string('postal_code')->nullable();
+            
+
             $table->timestamps();
             
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
