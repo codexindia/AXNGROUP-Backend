@@ -325,7 +325,7 @@ public function getPrimaryDomain()
 
                 $idCardDetails = [
                     'unique_id' => $user->unique_id,
-                    'verify_url' => 'https://'.$this->getPrimaryDomain() . '/verify/check-id.html/' . $user->unique_id,
+                    'verify_url' => 'https://'.$this->getPrimaryDomain() . '/verify/check-id.html?id=' . $user->unique_id,
                     'profile_photo' => $user->profile->user_photo 
                         ? url('storage/' . $user->profile->user_photo) 
                         : null,
