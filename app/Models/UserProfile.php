@@ -16,10 +16,14 @@ class UserProfile extends Model
         'pan_number',
         'address',
         'dob',
+        'joining_date',
+        'id_card_valid_until',
     ];
 
     protected $casts = [
         'dob' => 'date',
+        'joining_date' => 'date',
+        'id_card_valid_until' => 'date',
     ];
 
     public function user()
@@ -30,5 +34,25 @@ class UserProfile extends Model
     public function bankDetails()
     {
         return $this->hasMany(BankDetail::class, 'user_id', 'user_id');
+    }
+
+    /**
+     * Get the designation based on user role
+     * Agent -> FSE (Field Sales Executive)
+     * Leader -> Team Leader
+     * Admin -> Admin
+     */
+    public function getDesignationAttribute()
+    {
+        if (!$this->user) {
+            return null;
+        }
+
+        return match($this->user->role) {
+            'agent' => 'FSE',
+            'leader' => 'Team Leader',
+            'admin' => 'Admin',
+            default => ucfirst($this->user->role)
+        };
     }
 }

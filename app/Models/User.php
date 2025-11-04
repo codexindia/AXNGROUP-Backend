@@ -115,6 +115,12 @@ class User extends Authenticatable
         return $this->hasMany(User::class, 'parent_id')->where('role', 'leader');
     }
 
+    // Bank details relationship
+    public function bankDetails()
+    {
+        return $this->hasMany(BankDetail::class);
+    }
+
     // Boot method to create wallet for agents and leaders
     protected static function booted()
     {

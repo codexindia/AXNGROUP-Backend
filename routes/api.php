@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\HierarchyController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\GoogleSheetsController;
+use App\Http\Controllers\Api\PublicVerificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +31,9 @@ use App\Http\Controllers\Api\GoogleSheetsController;
 Route::prefix('google-sheets')->group(function () {
     Route::post('/webhook', [GoogleSheetsController::class, 'webhookReceiveData']);
 });
+
+// Public ID Card Verification (No authentication required)
+Route::get('/verify-id/{uniqueId}', [PublicVerificationController::class, 'verifyIdCard']);
 
 // Auth Routes (No middleware)
 Route::prefix('auth')->group(function () {
@@ -156,6 +160,10 @@ Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
     Route::prefix('admin')->middleware('role:admin')->group(function () {
         Route::post('/toggle-user-block', [AdminController::class, 'toggleUserBlock']);
         Route::get('/users', [AdminController::class, 'getUsersList']);
+        
+        // Agent ID Card Management
+        Route::get('/agents/{agentId}/details', [AdminController::class, 'getAgentDetails']);
+        Route::post('/agents/{agentId}/update-id-card', [AdminController::class, 'updateAgentIdCardInfo']);
     });
     
     // App Settings Routes

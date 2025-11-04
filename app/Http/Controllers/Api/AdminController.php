@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
 
 class AdminController extends Controller
 {
@@ -264,6 +265,219 @@ class AdminController extends Controller
             'success' => true,
             'data' => $users,
             'statistics' => $stats
+        ]);
+    }
+
+    /**
+     * Get complete agent details for ID card generation
+     *
+     * @param int $agentId
+     * @return JsonResponse
+     */
+    public function getAgentDetails($agentId): JsonResponse
+    {
+        $agent = User::with([
+            'profile',
+            'kycVerification',
+            'bankDetails',
+            'wallet',
+            'parent:id,name,unique_id,role'
+        ])->find($agentId);
+
+        if (!$agent) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Agent not found'
+            ], 404);
+        }
+
+        // Verify user is actually an agent or leader (for ID card)
+        if (!in_array($agent->role, ['agent', 'leader'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User is not an agent or leader'
+            ], 400);
+        }
+
+        // Get profile photo (Priority: KYC profile_photo > user_profiles agent_photo)
+        $profilePhotoUrl = null;
+        if ($agent->kycVerification && $agent->kycVerification->profile_photo) {
+            $profilePhotoUrl = Storage::disk('public')->url($agent->kycVerification->profile_photo);
+        } elseif ($agent->profile && $agent->profile->agent_photo) {
+            $profilePhotoUrl = Storage::disk('public')->url($agent->profile->agent_photo);
+        }
+
+        // Get designation based on role
+        $designation = match($agent->role) {
+            'agent' => 'FSE',
+            'leader' => 'Team Leader',
+            'admin' => 'Admin',
+            default => ucfirst($agent->role)
+        };
+
+        // Get KYC status
+        $kycStatus = $agent->kycVerification ? $agent->kycVerification->kyc_status : 'not_submitted';
+        $isKycVerified = $kycStatus === 'approved';
+
+        // Get account status
+        $isActive = !$agent->is_blocked;
+
+        // Prepare response
+        $response = [
+            'id' => $agent->id,
+            'unique_id' => $agent->unique_id,
+            'name' => $agent->name,
+            'mobile' => $agent->mobile,
+            'email' => $agent->email,
+            'role' => $agent->role,
+            'designation' => $designation,
+            'is_active' => $isActive,
+            'is_blocked' => $agent->is_blocked,
+            'profile_photo_url' => $profilePhotoUrl,
+            'kyc_status' => $kycStatus,
+            'is_kyc_verified' => $isKycVerified,
+            'wallet_balance' => $agent->wallet ? $agent->wallet->balance : '0.00',
+            'created_at' => $agent->created_at,
+            
+            // Profile information
+            'profile' => $agent->profile ? [
+                'aadhar_number' => $agent->profile->aadhar_number,
+                'pan_number' => $agent->profile->pan_number,
+                'address' => $agent->profile->address,
+                'dob' => $agent->profile->dob?->format('Y-m-d'),
+                'joining_date' => $agent->profile->joining_date?->format('Y-m-d'),
+                'id_card_valid_until' => $agent->profile->id_card_valid_until?->format('Y-m-d'),
+            ] : null,
+            
+            // KYC information
+            'kyc' => $agent->kycVerification ? [
+                'working_city' => $agent->kycVerification->working_city,
+                'kyc_status' => $agent->kycVerification->kyc_status,
+                'submitted_at' => $agent->kycVerification->submitted_at?->format('Y-m-d H:i:s'),
+                'approved_at' => $agent->kycVerification->approved_at?->format('Y-m-d H:i:s'),
+            ] : null,
+            
+            // Parent (Leader/Admin) information
+            'parent' => $agent->parent ? [
+                'id' => $agent->parent->id,
+                'name' => $agent->parent->name,
+                'unique_id' => $agent->parent->unique_id,
+                'role' => $agent->parent->role,
+            ] : null,
+            
+            // Bank details
+            'bank_details' => $agent->bankDetails->map(function ($bank) {
+                return [
+                    'id' => $bank->id,
+                    'account_holder_name' => $bank->account_holder_name,
+                    'bank_name' => $bank->bank_name,
+                    'account_number' => $bank->account_number,
+                    'ifsc_code' => $bank->ifsc_code,
+                ];
+            }),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $response
+        ]);
+    }
+
+    /**
+     * Update agent's ID card information (photo, joining date, valid until)
+     * Admin only - flexible update (can update one or all fields)
+     *
+     * @param Request $request
+     * @param int $agentId
+     * @return JsonResponse
+     */
+    public function updateAgentIdCardInfo(Request $request, $agentId): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'agent_photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'joining_date' => 'nullable|date|before_or_equal:today',
+            'id_card_valid_until' => 'nullable|date|after:today',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $agent = User::with('profile')->find($agentId);
+
+        if (!$agent) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Agent not found'
+            ], 404);
+        }
+
+        // Verify user is agent or leader
+        if (!in_array($agent->role, ['agent', 'leader'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User is not an agent or leader'
+            ], 400);
+        }
+
+        // Get or create profile
+        $profile = $agent->profile;
+        if (!$profile) {
+            $profile = $agent->profile()->create([
+                'user_id' => $agent->id
+            ]);
+        }
+
+        $updated = false;
+
+        // Handle photo upload
+        if ($request->hasFile('agent_photo')) {
+            // Delete old photo if exists
+            if ($profile->agent_photo) {
+                Storage::disk('public')->delete($profile->agent_photo);
+            }
+            
+            $photoPath = $request->file('agent_photo')->store('agent_photos', 'public');
+            $profile->agent_photo = $photoPath;
+            $updated = true;
+        }
+
+        // Update joining date if provided
+        if ($request->has('joining_date')) {
+            $profile->joining_date = $request->joining_date;
+            $updated = true;
+        }
+
+        // Update ID card expiry if provided
+        if ($request->has('id_card_valid_until')) {
+            $profile->id_card_valid_until = $request->id_card_valid_until;
+            $updated = true;
+        }
+
+        if ($updated) {
+            $profile->save();
+        }
+
+        // Get updated photo URL
+        $profilePhotoUrl = $profile->agent_photo 
+            ? Storage::disk('public')->url($profile->agent_photo) 
+            : null;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Agent ID card information updated successfully',
+            'data' => [
+                'agent_id' => $agent->id,
+                'name' => $agent->name,
+                'unique_id' => $agent->unique_id,
+                'profile_photo_url' => $profilePhotoUrl,
+                'joining_date' => $profile->joining_date?->format('Y-m-d'),
+                'id_card_valid_until' => $profile->id_card_valid_until?->format('Y-m-d'),
+            ]
         ]);
     }
 }
