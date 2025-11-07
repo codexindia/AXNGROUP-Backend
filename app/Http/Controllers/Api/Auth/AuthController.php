@@ -302,6 +302,27 @@ class AuthController extends Controller
             'data' => $userData
         ]);
     }
+    public function getPrimaryDomain()
+{
+    $host = request()->getHost(); // e.g. app.example.com
+
+    // Split the host by dots
+    $parts = explode('.', $host);
+
+    // Handle scenarios like sub.sub.example.com or example.co.in
+    if (count($parts) >= 2) {
+        // For simple domains like example.com
+        $primaryDomain = implode('.', array_slice($parts, -2));
+    }else {
+        // Fallback to the original host if it doesn't have at least two parts
+        $primaryDomain = $host;
+    }
+
+    // You can enhance this to handle TLDs like .co.in
+    // Add special logic if needed
+
+    return $primaryDomain; // example.com
+}
    private function addIdCardInfo($user)
     {
         $idCardStatus = 'not_issued';
