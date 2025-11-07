@@ -277,7 +277,7 @@ class AuthController extends Controller
         // Load relationships based on role
         if (in_array($user->role, ['agent', 'leader'])) {
             $user->load(['wallet','profile']);
-            
+             $this->addIdCardInfo($user);
             // Merge wallet balance into user object and remove wallet object
             $userData = $user->toArray();
             $userData['wallet_balance'] = $user->wallet ? $user->wallet->balance : '0.00';
@@ -288,20 +288,60 @@ class AuthController extends Controller
             
         } else {
             $user->load(['profile']);
+             $this->addIdCardInfo($user);
             $userData = $user->toArray();
             
             // Remove unnecessary keys for admin
             unset($userData['email_verified_at'], $userData['deleted_at'], $userData['referral_code']);
         }
-        $admin = new AdminController;
-        $admin->addIdCardInfo($userData);
+       
+       
 
         return response()->json([
             'success' => true,
             'data' => $userData
         ]);
     }
-  
+   private function addIdCardInfo($user)
+    {
+        $idCardStatus = 'not_issued';
+        $idCardDetails = null;
+
+        if ($user->profile) {
+            $validUntil = $user->profile->id_card_validity 
+                ? Carbon::parse($user->profile->id_card_validity) 
+                : null;
+
+            if ($validUntil) {
+                if ($validUntil->isFuture()) {
+                    $idCardStatus = 'active';
+                } else {
+                    $idCardStatus = 'expired';
+                }
+
+                $idCardDetails = [
+                    'unique_id' => $user->unique_id,
+                    'verify_url' => 'https://'.$this->getPrimaryDomain() . '/verify/check-id.html?id=' . $user->unique_id,
+                    'profile_photo' => $user->profile->user_photo 
+                        ? url('storage/' . $user->profile->user_photo) 
+                        : null,
+                    'blood_group' => $user->profile->blood_group,
+                    'valid_until' => $validUntil->format('Y-m-d'),
+                    'days_remaining' => $validUntil->isFuture() 
+                        ? $validUntil->diffInDays(now()) 
+                        : 0
+                ];
+            }
+        }
+
+        $user->id_card_status = $idCardStatus; // 'not_issued', 'active', 'expired'
+        $user->id_card = $idCardDetails;
+
+        // Remove profile relation from response to avoid duplication
+        unset($user->profile);
+
+        return $user;
+    }
 public function verifyIdCard($uniqueId): JsonResponse
 {
     $user = User::where('unique_id', $uniqueId)

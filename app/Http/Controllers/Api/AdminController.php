@@ -306,7 +306,7 @@ public function getPrimaryDomain()
     /**
      * Helper method to add ID card information to user object
      */
-    public function addIdCardInfo($user)
+    private function addIdCardInfo($user)
     {
         $idCardStatus = 'not_issued';
         $idCardDetails = null;
