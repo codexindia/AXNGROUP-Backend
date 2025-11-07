@@ -276,7 +276,7 @@ class AuthController extends Controller
         
         // Load relationships based on role
         if (in_array($user->role, ['agent', 'leader'])) {
-            $user->load(['wallet']);
+            $user->load(['wallet','profile']);
             
             // Merge wallet balance into user object and remove wallet object
             $userData = $user->toArray();
@@ -287,7 +287,7 @@ class AuthController extends Controller
             unset($userData['email_verified_at'], $userData['deleted_at']);
             
         } else {
-           // $user->load(['profile']);
+            $user->load(['profile']);
             $userData = $user->toArray();
             
             // Remove unnecessary keys for admin
