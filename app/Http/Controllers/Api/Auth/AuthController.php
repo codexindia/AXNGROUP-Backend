@@ -272,7 +272,7 @@ class AuthController extends Controller
 
     public function profile(Request $request)
     {
-        $user = $request->user();
+        $user = User::find($request->user()->id);
         
         // Load relationships based on role
         if (in_array($user->role, ['agent', 'leader'])) {
