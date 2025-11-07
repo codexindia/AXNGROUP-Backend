@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use App\Http\Controllers\Api\AdminController;
 use Carbon\Carbon;
 
 class AuthController extends Controller
@@ -275,7 +276,7 @@ class AuthController extends Controller
         
         // Load relationships based on role
         if (in_array($user->role, ['agent', 'leader'])) {
-            $user->load(['profile', 'wallet']);
+            $user->load(['wallet']);
             
             // Merge wallet balance into user object and remove wallet object
             $userData = $user->toArray();
@@ -286,12 +287,14 @@ class AuthController extends Controller
             unset($userData['email_verified_at'], $userData['deleted_at']);
             
         } else {
-            $user->load(['profile']);
+           // $user->load(['profile']);
             $userData = $user->toArray();
             
             // Remove unnecessary keys for admin
             unset($userData['email_verified_at'], $userData['deleted_at'], $userData['referral_code']);
         }
+        $admin = new AdminController;
+        $admin->addIdCardInfo($userData);
 
         return response()->json([
             'success' => true,
