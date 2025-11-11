@@ -329,6 +329,7 @@ public function getPrimaryDomain()
                     'profile_photo' => $user->profile->user_photo 
                         ? url('storage/' . $user->profile->user_photo) 
                         : null,
+                    'issued_date' => $user->profile->issued_date,
                     'blood_group' => $user->profile->blood_group,
                     'valid_until' => $validUntil->format('Y-m-d'),
                     'days_remaining' => $validUntil->isFuture() 
@@ -353,13 +354,14 @@ public function getPrimaryDomain()
      * @param Request $request
      * @return JsonResponse
      */
-    public function issueIdCard(Request $request): JsonResponse
+    public function issueIdCard(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
             'profile_photo' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
             'valid_until' => 'required|date|after:today',
-            'blood_group' => 'nullable|string|in:A+,A-,B+,B-,AB+,AB-,O+,O-'
+            'blood_group' => 'nullable|string|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+            'issued_date' => 'nullable|date'
         ]);
 
         if ($validator->fails()) {
@@ -403,7 +405,8 @@ public function getPrimaryDomain()
         $profileData = [
             'user_id' => $user->id,
             'id_card_validity' => $request->valid_until,
-            'blood_group' => $request->blood_group
+            'blood_group' => $request->blood_group,
+            'issued_date' => $request->issued_date ?? Carbon::now()->toDateString(),
         ];
 
         if ($profilePhotoPath) {

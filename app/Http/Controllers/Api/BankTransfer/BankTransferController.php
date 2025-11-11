@@ -275,7 +275,7 @@ class BankTransferController extends Controller
         $bankTransfers = $query->orderBy('created_at', 'desc')->get();
 
         // Group by customer mobile number
-        $groupedTransfers = $bankTransfers->groupBy('customer_mobile')->map(function ($transfers, $mobileNo) {
+        $groupedTransfers = $bankTransfers->where('status','=','pending')->groupBy('customer_mobile')->map(function ($transfers, $mobileNo) {
             $totalAmount = $transfers->sum('amount');
 
             // Get actual amount from monthly_bt_sheet_data table for current month
