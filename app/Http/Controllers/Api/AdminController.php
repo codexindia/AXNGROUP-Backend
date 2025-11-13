@@ -417,18 +417,17 @@ class AdminController extends Controller
             'city' => $request->city,
             'state' => $request->state,
             'postal_code' => $request->postal_code,
-            
+
         ];
 
         if ($profilePhotoPath) {
             $profileData['user_photo'] = $profilePhotoPath;
         }
 
-        if ($profile) {
-            $profile->update($profileData);
-        } else {
-            $profile = UserProfile::create($profileData);
-        }
+        UserProfile::updateOrCreate(
+            ['user_id' => $user->id],
+            $profileData
+        );
 
         // Get updated user with profile
         $user->load('profile');
@@ -504,7 +503,7 @@ class AdminController extends Controller
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
             'valid_until' => 'required|date|after:today',
-            'issued_date' => 'nullable|date'
+            'issued_date' => 'nullable|date',
         ]);
 
         if ($validator->fails()) {
@@ -527,7 +526,7 @@ class AdminController extends Controller
 
         $profile->update([
             'id_card_validity' => $request->valid_until,
-            'issued_date' => $request->issued_date ?? Carbon::now()->toDateString()
+            'issued_date' => $request->issued_date ?? Carbon::now()->toDateString(),
         ]);
 
         $user->load('profile');
