@@ -347,6 +347,12 @@ class AuthController extends Controller
                     'issued_date' => $user->profile->issued_date
                         ? url('storage/' . $user->profile->user_photo) 
                         : null,
+                        'address_line_1' => $user->profile->address_line_1,
+                        'address_line_2' => $user->profile->address_line_2,
+                        'city' => $user->profile->city,
+                        'state' => $user->profile->state,
+                        'postal_code' => $user->profile->postal_code,
+                        
                     'blood_group' => $user->profile->blood_group,
                     'valid_until' => $validUntil->format('Y-m-d'),
                     'days_remaining' => $validUntil->isFuture() 

@@ -26,7 +26,7 @@ class AdminController extends Controller
         ]);
 
         $userId = $request->user_id;
-        
+
         // Prevent admin from blocking themselves
         if (auth()->id() == $userId) {
             return response()->json([
@@ -36,7 +36,7 @@ class AdminController extends Controller
         }
 
         $user = User::find($userId);
-        
+
         if (!$user) {
             return response()->json([
                 'success' => false,
@@ -117,11 +117,11 @@ class AdminController extends Controller
         // Apply search filter
         if ($request->filled('search')) {
             $searchTerm = $request->search;
-            $query->where(function($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
                 $q->where('name', 'like', "%{$searchTerm}%")
-                  ->orWhere('email', 'like', "%{$searchTerm}%")
-                  ->orWhere('mobile', 'like', "%{$searchTerm}%")
-                  ->orWhere('unique_id', 'like', "%{$searchTerm}%");
+                    ->orWhere('email', 'like', "%{$searchTerm}%")
+                    ->orWhere('mobile', 'like', "%{$searchTerm}%")
+                    ->orWhere('unique_id', 'like', "%{$searchTerm}%");
             });
         }
 
@@ -132,7 +132,7 @@ class AdminController extends Controller
 
         // Select fields and relationships - Include profile for ID card info
         $query->select(['id', 'unique_id', 'name', 'email', 'mobile', 'role', 'parent_id', 'is_blocked', 'created_at'])
-              ->with(['parent:id,name,unique_id', 'profile:id,user_id,user_photo,id_card_validity,blood_group']);
+            ->with(['parent:id,name,unique_id', 'profile:id,user_id,user_photo,id_card_validity,blood_group']);
 
         // Add counts for leaders and agents
         if ($request->type === 'leaders') {
@@ -140,7 +140,7 @@ class AdminController extends Controller
         }
 
         $users = $query->orderBy('created_at', 'desc')
-                      ->paginate($request->get('per_page', 20));
+            ->paginate($request->get('per_page', 20));
 
         // Add performance counts and ID card status after pagination
         if ($request->type === 'leaders') {
@@ -148,9 +148,9 @@ class AdminController extends Controller
             $users->getCollection()->transform(function ($leader) {
                 // Get all agent IDs under this leader
                 $agentIds = User::where('parent_id', $leader->id)
-                               ->where('role', 'agent')
-                               ->pluck('id')
-                               ->toArray();
+                    ->where('role', 'agent')
+                    ->pluck('id')
+                    ->toArray();
 
                 if (!empty($agentIds)) {
                     // Count bank transfers for today
@@ -281,27 +281,27 @@ class AdminController extends Controller
             'statistics' => $stats
         ]);
     }
-public function getPrimaryDomain()
-{
-    $host = request()->getHost(); // e.g. app.example.com
+    public function getPrimaryDomain()
+    {
+        $host = request()->getHost(); // e.g. app.example.com
 
-    // Split the host by dots
-    $parts = explode('.', $host);
+        // Split the host by dots
+        $parts = explode('.', $host);
 
-    // Handle scenarios like sub.sub.example.com or example.co.in
-    if (count($parts) >= 2) {
-        // For simple domains like example.com
-        $primaryDomain = implode('.', array_slice($parts, -2));
-    }else {
-        // Fallback to the original host if it doesn't have at least two parts
-        $primaryDomain = $host;
+        // Handle scenarios like sub.sub.example.com or example.co.in
+        if (count($parts) >= 2) {
+            // For simple domains like example.com
+            $primaryDomain = implode('.', array_slice($parts, -2));
+        } else {
+            // Fallback to the original host if it doesn't have at least two parts
+            $primaryDomain = $host;
+        }
+
+        // You can enhance this to handle TLDs like .co.in
+        // Add special logic if needed
+
+        return $primaryDomain; // example.com
     }
-
-    // You can enhance this to handle TLDs like .co.in
-    // Add special logic if needed
-
-    return $primaryDomain; // example.com
-}
 
     /**
      * Helper method to add ID card information to user object
@@ -312,8 +312,8 @@ public function getPrimaryDomain()
         $idCardDetails = null;
 
         if ($user->profile) {
-            $validUntil = $user->profile->id_card_validity 
-                ? Carbon::parse($user->profile->id_card_validity) 
+            $validUntil = $user->profile->id_card_validity
+                ? Carbon::parse($user->profile->id_card_validity)
                 : null;
 
             if ($validUntil) {
@@ -325,15 +325,20 @@ public function getPrimaryDomain()
 
                 $idCardDetails = [
                     'unique_id' => $user->unique_id,
-                    'verify_url' => 'https://'.$this->getPrimaryDomain() . '/verify/check-id.html?id=' . $user->unique_id,
-                    'profile_photo' => $user->profile->user_photo 
-                        ? url('storage/' . $user->profile->user_photo) 
+                    'verify_url' => 'https://' . $this->getPrimaryDomain() . '/verify/check-id.html?id=' . $user->unique_id,
+                    'profile_photo' => $user->profile->user_photo
+                        ? url('storage/' . $user->profile->user_photo)
                         : null,
+                    'address_line_1' => $user->profile->address_line_1,
+                    'address_line_2' => $user->profile->address_line_2,
+                    'city' => $user->profile->city,
+                    'state' => $user->profile->state,
+                    'postal_code' => $user->profile->postal_code,
                     'issued_date' => $user->profile->issued_date,
                     'blood_group' => $user->profile->blood_group,
                     'valid_until' => $validUntil->format('Y-m-d'),
-                    'days_remaining' => $validUntil->isFuture() 
-                        ? $validUntil->diffInDays(now()) 
+                    'days_remaining' => $validUntil->isFuture()
+                        ? $validUntil->diffInDays(now())
                         : 0
                 ];
             }
@@ -406,7 +411,13 @@ public function getPrimaryDomain()
             'user_id' => $user->id,
             'id_card_validity' => $request->valid_until,
             'blood_group' => $request->blood_group,
-            'issued_date' => $request->issued_date 
+            'issued_date' => $request->issued_date,
+            'address_line_1' => $request->address_line_1,
+            'address_line_2' => $request->address_line_2,
+            'city' => $request->city,
+            'state' => $request->state,
+            'postal_code' => $request->postal_code,
+            
         ];
 
         if ($profilePhotoPath) {
@@ -431,7 +442,7 @@ public function getPrimaryDomain()
                 'name' => $user->name,
                 'unique_id' => $user->unique_id,
                 'id_card_status' => $user->id_card_status,
-               // 'id_card' => $user->id_card
+                // 'id_card' => $user->id_card
             ]
         ]);
     }
@@ -516,7 +527,7 @@ public function getPrimaryDomain()
 
         $profile->update([
             'id_card_validity' => $request->valid_until,
-            'issued_date' => $request->issued_date??: Carbon::now()->toDateString()
+            'issued_date' => $request->issued_date ?? Carbon::now()->toDateString()
         ]);
 
         $user->load('profile');
