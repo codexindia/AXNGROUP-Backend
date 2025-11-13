@@ -322,7 +322,7 @@ class AdminController extends Controller
                 } else {
                     $idCardStatus = 'expired';
                 }
-
+                dd($user->profile);
                 $idCardDetails = [
                     'unique_id' => $user->unique_id,
                     'verify_url' => 'https://' . $this->getPrimaryDomain() . '/verify/check-id.html?id=' . $user->unique_id,
