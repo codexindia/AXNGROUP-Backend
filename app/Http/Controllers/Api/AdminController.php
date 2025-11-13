@@ -132,7 +132,7 @@ class AdminController extends Controller
 
         // Select fields and relationships - Include profile for ID card info
         $query->select(['id', 'unique_id', 'name', 'email', 'mobile', 'role', 'parent_id', 'is_blocked', 'created_at'])
-            ->with(['parent:id,name,unique_id', 'profile:id,user_id,user_photo,id_card_validity,blood_group','issued_date']);
+            ->with(['parent:id,name,unique_id', 'profile:id,user_id,user_photo,id_card_validity,blood_group,issued_date']);
 
         // Add counts for leaders and agents
         if ($request->type === 'leaders') {
