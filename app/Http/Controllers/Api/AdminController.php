@@ -406,7 +406,7 @@ public function getPrimaryDomain()
             'user_id' => $user->id,
             'id_card_validity' => $request->valid_until,
             'blood_group' => $request->blood_group,
-            'issued_date' => $request->issued_date ?? Carbon::now()->toDateString(),
+            'issued_date' => $request->issued_date 
         ];
 
         if ($profilePhotoPath) {
@@ -492,7 +492,8 @@ public function getPrimaryDomain()
     {
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
-            'valid_until' => 'required|date|after:today'
+            'valid_until' => 'required|date|after:today',
+            'issued_date' => 'nullable|date'
         ]);
 
         if ($validator->fails()) {
@@ -514,7 +515,8 @@ public function getPrimaryDomain()
         }
 
         $profile->update([
-            'id_card_validity' => $request->valid_until
+            'id_card_validity' => $request->valid_until,
+            'issued_date' => $request->issued_date??: Carbon::now()->toDateString()
         ]);
 
         $user->load('profile');

@@ -343,7 +343,8 @@ class AuthController extends Controller
                 $idCardDetails = [
                     'unique_id' => $user->unique_id,
                     'verify_url' => 'https://'.$this->getPrimaryDomain() . '/verify/check-id.html?id=' . $user->unique_id,
-                    'profile_photo' => $user->profile->user_photo 
+                    'profile_photo' => $user->profile->user_photo ,
+                    'issued_date' => $user->profile->issued_date
                         ? url('storage/' . $user->profile->user_photo) 
                         : null,
                     'blood_group' => $user->profile->blood_group,
