@@ -553,7 +553,7 @@ class AdminController extends Controller
             'city' => $request->city ?? $profile->city,
             'state' => $request->state ?? $profile->state,
             'postal_code' => $request->postal_code ?? $profile->postal_code,
-            'profile_photo' => $profilePhotoPath ?? $profile->profile_photo,
+            'user_photo' => $profilePhotoPath ?? $profile->profile_photo,
             'issued_date' => $request->issued_date ?? Carbon::now()->toDateString(),
         ]);
 
