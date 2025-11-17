@@ -322,7 +322,7 @@ class AdminController extends Controller
                 } else {
                     $idCardStatus = 'expired';
                 }
-               // dd($user->profile);
+                // dd($user->profile);
                 $idCardDetails = [
                     'unique_id' => $user->unique_id,
                     'verify_url' => 'https://' . $this->getPrimaryDomain() . '/verify/check-id.html?id=' . $user->unique_id,
@@ -503,6 +503,13 @@ class AdminController extends Controller
         $validator = Validator::make($request->all(), [
             'user_id' => 'required|exists:users,id',
             'valid_until' => 'required|date|after:today',
+            'profile_photo' => 'nullable|image|mimes:jpeg,jpg,png|max:2048',
+            'blood_group' => 'nullable|string|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+            'address_line_1' => 'nullable|string|max:255',
+            'address_line_2' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:100',
+            'state' => 'nullable|string|max:100',
+            'postal_code' => 'nullable|string|max:20',
             'issued_date' => 'nullable|date',
         ]);
 
@@ -514,6 +521,7 @@ class AdminController extends Controller
             ], 422);
         }
 
+
         $user = User::find($request->user_id);
         $profile = UserProfile::where('user_id', $user->id)->first();
 
@@ -523,9 +531,29 @@ class AdminController extends Controller
                 'message' => 'User does not have an ID card. Please issue a new card first.'
             ], 404);
         }
+        if ($request->hasFile('profile_photo')) {
+            // Delete old photo if exists
+            if ($profile && $profile->user_photo) {
+                Storage::disk('public')->delete($profile->user_photo);
+            }
 
+            $file = $request->file('profile_photo');
+            $fileName = 'profile_' . $user->id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $profilePhotoPath = $file->storeAs('profiles', $fileName, 'public');
+        } elseif ($profile && $profile->user_photo) {
+            // Keep existing photo if no new photo uploaded
+            $profilePhotoPath = $profile->user_photo;
+        }
         $profile->update([
             'id_card_validity' => $request->valid_until,
+
+            'blood_group' => $request->blood_group ?? $profile->blood_group,
+            'address_line_1' => $request->address_line_1 ?? $profile->address_line_1,
+            'address_line_2' => $request->address_line_2 ?? $profile->address_line_2,
+            'city' => $request->city ?? $profile->city,
+            'state' => $request->state ?? $profile->state,
+            'postal_code' => $request->postal_code ?? $profile->postal_code,
+            'profile_photo' => $profilePhotoPath ?? $profile->profile_photo,
             'issued_date' => $request->issued_date ?? Carbon::now()->toDateString(),
         ]);
 
