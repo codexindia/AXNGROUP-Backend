@@ -558,11 +558,13 @@ class ShopController extends Controller
         // Monthly statistics (current month)
         $currentMonth = Carbon::now();
         $thisMonthShops = Shop::where('agent_id', $agentId)
+        ->where('status', 'approved')
             ->whereMonth('created_at', $currentMonth->month)
             ->whereYear('created_at', $currentMonth->year)
             ->count();
 
         $thisMonthBankTransfers = \App\Models\BankTransfer::where('agent_id', $agentId)
+        ->where('status', 'approved')
             ->whereMonth('created_at', $currentMonth->month)
             ->whereYear('created_at', $currentMonth->year)
             ->count();
@@ -574,6 +576,7 @@ class ShopController extends Controller
             ->sum('amount') ?? 0;
 
         $thisMonthRewardPasses = \App\Models\RewardPass::where('agent_id', $agentId)
+        ->where('status', 'approved')
             ->whereMonth('created_at', $currentMonth->month)
             ->whereYear('created_at', $currentMonth->year)
             ->count();
