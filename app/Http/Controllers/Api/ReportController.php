@@ -129,7 +129,7 @@ class ReportController extends Controller
         // Group by customer mobile number
         $allCustomerData = $allBankTransfers->groupBy('customer_mobile')->map(function ($transfers) {
             $approvedBT = $transfers->where('status', 'approved')->sum('amount');
-            $pendingBT = $transfers->where('status', 'pending')->count();
+            $pendingBT = 200000 - $approvedBT;
             
             $firstTransfer = $transfers->first();
             
@@ -142,7 +142,7 @@ class ReportController extends Controller
                 'customer_name' => $firstTransfer->customer_name,
                 'mobile_no' => $firstTransfer->customer_mobile,
                 'approved_bt' => (float) $approvedBT,
-                'pending_bt' => $pendingBT,
+                'pending_bt' => (float) $pendingBT,
                 'reward_pass' => $rewardPass ? 'Active' : '-',
                 'latest_date' => $transfers->max('created_at'),
             ];
@@ -309,7 +309,6 @@ class ReportController extends Controller
         // Group by customer mobile number
         $allCustomerData = $allBankTransfers->groupBy('customer_mobile')->map(function ($transfers) {
             $approvedBT = $transfers->where('status', 'approved')->sum('amount');
-            $pendingBT = $transfers->where('status', 'pending')->count();
             
             $firstTransfer = $transfers->first();
             
@@ -322,7 +321,6 @@ class ReportController extends Controller
                 'customer_name' => $firstTransfer->customer_name,
                 'mobile_no' => $firstTransfer->customer_mobile,
                 'approved_bt' => (float) $approvedBT,
-                'pending_bt' => $pendingBT,
                 'reward_pass' => $rewardPass ? 'Active' : '-',
                 'latest_time' => $transfers->max('created_at'),
             ];
