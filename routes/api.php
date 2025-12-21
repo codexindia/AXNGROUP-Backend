@@ -181,9 +181,18 @@ Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
     });
 
     // Reports Module
-    Route::prefix('reports')->group(function () {
-        Route::middleware('role:agent,leader,admin')->get('/onboarding-monthly', [ReportController::class, 'getOnboardingMonthlyReport']);
-        Route::middleware('role:agent,leader,admin')->get('/bank-transfer-monthly', [ReportController::class, 'getBankTransferMonthlyReport']);
+    Route::prefix('reports')->middleware('role:agent,leader,admin')->group(function () {
+        // Onboarding Reports
+        Route::prefix('onboarding')->group(function () {
+            Route::get('/daily', [ReportController::class, 'getOnboardingDailyReport']);
+            Route::get('/monthly', [ReportController::class, 'getOnboardingMonthlyReport']);
+        });
+        
+        // Bank Transfer Reports
+        Route::prefix('bank-transfer')->group(function () {
+            Route::get('/daily', [ReportController::class, 'getBankTransferDailyReport']);
+            Route::get('/monthly', [ReportController::class, 'getBankTransferMonthlyReport']);
+        });
     });
 });
 // Google Sheets Integration Routes
