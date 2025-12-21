@@ -14,7 +14,7 @@ use App\Http\Controllers\Api\HierarchyController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\GoogleSheetsController;
-
+use App\Http\Controllers\Api\ReportController;
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -59,6 +59,7 @@ Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
         Route::middleware('role:leader,admin')->post('credit', [WalletController::class, 'creditWallet']); // Leader/Admin only
         Route::middleware('role:agent')->get('payouts', [WalletController::class, 'getPayoutHistory']); // Agent payout history
     });
+   
 
     // Shop Module (Onboarding)
     Route::prefix('shops')->group(function () {
@@ -177,6 +178,12 @@ Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
         Route::post('/sync-today', [GoogleSheetsController::class, 'syncTodayData']);
         Route::post('/sync-onboarding', [GoogleSheetsController::class, 'syncOnboardingData']);
         //   Route::post('webhook', [GoogleSheetsController::class, 'webhookReceiveData']); // To manually trigger webhook processing if needed
+    });
+
+    // Reports Module
+    Route::prefix('reports')->group(function () {
+        Route::middleware('role:agent,leader,admin')->get('/onboarding-monthly', [ReportController::class, 'getOnboardingMonthlyReport']);
+        Route::middleware('role:agent,leader,admin')->get('/bank-transfer-monthly', [ReportController::class, 'getBankTransferMonthlyReport']);
     });
 });
 // Google Sheets Integration Routes
