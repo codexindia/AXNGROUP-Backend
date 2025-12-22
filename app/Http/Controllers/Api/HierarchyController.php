@@ -42,7 +42,7 @@ class HierarchyController extends Controller
             });
             
             $dailyBankTransfers = $agents->sum(function($agent) use ($today) {
-            return $agent->bankTransfers()->whereDate('created_at', $today)->count();
+            return $agent->bankTransfers()->whereDate('created_at', $today)->sum();
             });
 
             // Calculate monthly counts across all agents
@@ -55,7 +55,7 @@ class HierarchyController extends Controller
             });
             
             $monthlyBankTransfers = $agents->sum(function($agent) use ($startOfMonth, $endOfMonth) {
-            return $agent->bankTransfers()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+            return $agent->bankTransfers()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->sum();
             });
 
             return [
