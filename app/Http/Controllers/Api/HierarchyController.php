@@ -42,7 +42,7 @@ class HierarchyController extends Controller
             });
             
             $dailyBankTransfers = $agents->sum(function($agent) use ($today) {
-            return $agent->bankTransfers()->whereDate('created_at', $today)->sum('amount');
+            return $agent->bankTransfers()->where('status','approved')->whereDate('created_at', $today)->sum('amount');
             });
 
             // Calculate monthly counts across all agents
@@ -55,7 +55,7 @@ class HierarchyController extends Controller
             });
             
             $monthlyBankTransfers = $agents->sum(function($agent) use ($startOfMonth, $endOfMonth) {
-            return $agent->bankTransfers()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->sum('amount');
+            return $agent->bankTransfers()->where('status','approved')->whereBetween('created_at', [$startOfMonth, $endOfMonth])->sum('amount');
             });
 
             return [
@@ -134,12 +134,12 @@ class HierarchyController extends Controller
 
                 // Daily counts
                 $dailyShops = $agent->shops()->whereDate('created_at', $today)->count();
-                $dailyBankTransfers = $agent->bankTransfers()->whereDate('created_at', $today)->sum('amount');
+                $dailyBankTransfers = $agent->bankTransfers()->where('status','approved')->whereDate('created_at', $today)->sum('amount');
                 $dailyRewardPasses = $agent->rewardPasses()->whereDate('created_at', $today)->count();
 
                 // Monthly counts
                 $monthlyShops = $agent->shops()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
-                $monthlyBankTransfers = $agent->bankTransfers()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->sum('amount');
+                $monthlyBankTransfers = $agent->bankTransfers()->where('status','approved')->whereBetween('created_at', [$startOfMonth, $endOfMonth])->sum('amount');
                 $monthlyRewardPasses = $agent->rewardPasses()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
 
                 // Total counts
