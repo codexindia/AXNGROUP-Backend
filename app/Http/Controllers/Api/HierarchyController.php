@@ -25,62 +25,84 @@ class HierarchyController extends Controller
 
         $leadersData = $leaders->getCollection()->map(function($leader) {
             // Get today's date
-            $today = now()->format('Y-m-d');
-            $startOfMonth = now()->startOfMonth()->format('Y-m-d');
-            $endOfMonth = now()->endOfMonth()->format('Y-m-d');
+            $today = now()->startOfDay();
+            $startOfMonth = now()->startOfMonth();
+            $endOfMonth = now()->endOfMonth();
 
             $agents = $leader->agents;
             $totalAgents = $agents->count();
 
             // Calculate daily counts across all agents
             $dailyShops = $agents->sum(function($agent) use ($today) {
-            return $agent->shops()->where('status', 'approved')->whereDate('created_at', $today)->count();
-            });
-            //daliy reward passes
-            $dailyRewardPasses = $agents->sum(function($agent) use ($today) {
-            return $agent->rewardPasses()->whereDate('created_at', $today)->count();
+                return $agent->shops()
+                    ->where('status', 'approved')
+                    ->whereDate('created_at', $today)
+                    ->count();
             });
             
+            // Daily reward passes (approved only)
+            $dailyRewardPasses = $agents->sum(function($agent) use ($today) {
+                return $agent->rewardPasses()
+                    ->where('status', 'approved')
+                    ->whereDate('created_at', $today)
+                    ->count();
+            });
+            
+            // Daily bank transfers (sum amounts, not count)
             $dailyBankTransfers = $agents->sum(function($agent) use ($today) {
-            return $agent->bankTransfers()->where('status', 'approved')->whereDate('created_at', $today)->sum('amount');
+                return $agent->bankTransfers()
+                    ->where('status', 'approved')
+                    ->whereDate('created_at', $today)
+                    ->sum('amount');
             });
 
             // Calculate monthly counts across all agents
             $monthlyShops = $agents->sum(function($agent) use ($startOfMonth, $endOfMonth) {
-            return $agent->shops()->where('status', 'approved')->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
-            });
-            //monthly reward passes
-            $monthlyRewardPasses = $agents->sum(function($agent) use ($startOfMonth, $endOfMonth) {
-            return $agent->rewardPasses()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+                return $agent->shops()
+                    ->where('status', 'approved')
+                    ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                    ->count();
             });
             
+            // Monthly reward passes (approved only)
+            $monthlyRewardPasses = $agents->sum(function($agent) use ($startOfMonth, $endOfMonth) {
+                return $agent->rewardPasses()
+                    ->where('status', 'approved')
+                    ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                    ->count();
+            });
+            
+            // Monthly bank transfers (sum amounts)
             $monthlyBankTransfers = $agents->sum(function($agent) use ($startOfMonth, $endOfMonth) {
-            return $agent->bankTransfers()->where('status', 'approved')->whereBetween('created_at', [$startOfMonth, $endOfMonth])->sum('amount');
+                return $agent->bankTransfers()
+                    ->where('status', 'approved')
+                    ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                    ->sum('amount');
             });
 
             return [
-            'id' => $leader->id,
-            'unique_id' => $leader->unique_id,
-            'name' => $leader->name,
-            'mobile' => $leader->mobile,
-            'email' => $leader->email,
-            'is_blocked' => $leader->is_blocked,
-            'created_at' => $leader->created_at,
-            'total_agents' => $totalAgents,
-            'counts' => [
-                'shop_onboarding' => [
-                'daily' => $dailyShops,
-                'monthly' => $monthlyShops
-                ],
-                'reward_passes' => [
-                'daily' => $dailyRewardPasses,
-                'monthly' => $monthlyRewardPasses
-                ],
-                'bank_transfers' => [
-                'daily' => $dailyBankTransfers,
-                'monthly' => $monthlyBankTransfers
+                'id' => $leader->id,
+                'unique_id' => $leader->unique_id,
+                'name' => $leader->name,
+                'mobile' => $leader->mobile,
+                'email' => $leader->email,
+                'is_blocked' => $leader->is_blocked,
+                'created_at' => $leader->created_at,
+                'total_agents' => $totalAgents,
+                'counts' => [
+                    'shop_onboarding' => [
+                        'daily' => $dailyShops,
+                        'monthly' => $monthlyShops
+                    ],
+                    'reward_passes' => [
+                        'daily' => $dailyRewardPasses,
+                        'monthly' => $monthlyRewardPasses
+                    ],
+                    'bank_transfers' => [
+                        'daily' => (float) $dailyBankTransfers,
+                        'monthly' => (float) $monthlyBankTransfers
+                    ]
                 ]
-            ]
             ];
         });
 
@@ -97,7 +119,7 @@ class HierarchyController extends Controller
     /**
      * Get all agents under a leader with necessary details and counts
      */
-     public function getAgentsUnderLeader(Request $request): JsonResponse
+    public function getAgentsUnderLeader(Request $request): JsonResponse
     {
         if ($request->user()->role !== 'leader' && $request->user()->role !== 'admin') {
             return response()->json([
@@ -105,6 +127,7 @@ class HierarchyController extends Controller
                 'message' => 'Only leaders and admins can access this endpoint'
             ], 403);
         }
+        
         if ($request->leader_id && $request->user()->role === 'admin') {
             $leader = User::where('role', 'leader')->where('id', $request->leader_id)->first();
             if (!$leader) {
@@ -113,7 +136,7 @@ class HierarchyController extends Controller
                     'message' => 'No leader found with the provided ID'
                 ], 404);
             }
-        }else{
+        } else {
             $leader = $request->user();
             if ($leader->role !== 'leader') {
                 return response()->json([
@@ -123,79 +146,108 @@ class HierarchyController extends Controller
             }
         }
 
+        $agents = $leader->agents()->get();
 
-            $agents = $leader->agents()->get();
+        $agentsData = $agents->map(function ($agent) {
+            // Get today's date
+            $today = now()->startOfDay();
+            $startOfMonth = now()->startOfMonth();
+            $endOfMonth = now()->endOfMonth();
 
-            $agentsData = $agents->map(function ($agent) {
-                // Get today's date
-                $today = now()->format('Y-m-d');
-                $startOfMonth = now()->startOfMonth()->format('Y-m-d');
-                $endOfMonth = now()->endOfMonth()->format('Y-m-d');
+            // Daily counts
+            $dailyShops = $agent->shops()
+                ->where('status', 'approved')
+                ->whereDate('created_at', $today)
+                ->count();
+                
+            $dailyBankTransfers = $agent->bankTransfers()
+                ->where('status', 'approved')
+                ->whereDate('created_at', $today)
+                ->sum('amount');
+                
+            $dailyRewardPasses = $agent->rewardPasses()
+                ->where('status', 'approved')
+                ->whereDate('created_at', $today)
+                ->count();
 
-                // Daily counts
-                $dailyShops = $agent->shops()->where('status', 'approved')->whereDate('created_at', $today)->count();
-                $dailyBankTransfers = $agent->bankTransfers()->where('status', 'approved')->whereDate('created_at', $today)->sum('amount');
-                $dailyRewardPasses = $agent->rewardPasses()->whereDate('created_at', $today)->count();
+            // Monthly counts
+            $monthlyShops = $agent->shops()
+                ->where('status', 'approved')
+                ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                ->count();
+                
+            $monthlyBankTransfers = $agent->bankTransfers()
+                ->where('status', 'approved')
+                ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                ->sum('amount');
+                
+            $monthlyRewardPasses = $agent->rewardPasses()
+                ->where('status', 'approved')
+                ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                ->count();
 
-                // Monthly counts
-                $monthlyShops = $agent->shops()->where('status', 'approved')->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
-                $monthlyBankTransfers = $agent->bankTransfers()->where('status', 'approved')->whereBetween('created_at', [$startOfMonth, $endOfMonth])->sum('amount');
-                $monthlyRewardPasses = $agent->rewardPasses()->whereBetween('created_at', [$startOfMonth, $endOfMonth])->count();
+            // Total counts
+            $totalShops = $agent->shops()
+                ->where('status', 'approved')
+                ->count();
+                
+            $totalBankTransfers = $agent->bankTransfers()
+                ->where('status', 'approved')
+                ->sum('amount');
+                
+            $totalRewardPasses = $agent->rewardPasses()
+                ->where('status', 'approved')
+                ->count();
 
-                // Total counts
-                $totalShops = $agent->shops()->where('status', 'approved')->count();
-                $totalBankTransfers = $agent->bankTransfers()->where('status', 'approved')->sum('amount');
-                $totalRewardPasses = $agent->rewardPasses()->count();
-
-                return [
-                    'id' => $agent->id,
-                    'unique_id' => $agent->unique_id,
-                    'name' => $agent->name,
-                    'mobile' => $agent->mobile,
-                    'email' => $agent->email,
-                    'is_blocked' => $agent->is_blocked,
-                    'created_at' => $agent->created_at,
-                    'counts' => [
-                        'shop_onboarding' => [
-                            'daily' => $dailyShops,
-                            'monthly' => $monthlyShops,
-                            'total' => $totalShops
-                        ],
-                        'bank_transfers' => [
-                            'daily' => $dailyBankTransfers,
-                            'monthly' => $monthlyBankTransfers,
-                            'total' => $totalBankTransfers
-                        ],
-                        'reward_passes' => [
-                            'daily' => $dailyRewardPasses,
-                            'monthly' => $monthlyRewardPasses,
-                            'total' => $totalRewardPasses
-                        ]
+            return [
+                'id' => $agent->id,
+                'unique_id' => $agent->unique_id,
+                'name' => $agent->name,
+                'mobile' => $agent->mobile,
+                'email' => $agent->email,
+                'is_blocked' => $agent->is_blocked,
+                'created_at' => $agent->created_at,
+                'counts' => [
+                    'shop_onboarding' => [
+                        'daily' => $dailyShops,
+                        'monthly' => $monthlyShops,
+                        'total' => $totalShops
+                    ],
+                    'bank_transfers' => [
+                        'daily' => (float) $dailyBankTransfers,
+                        'monthly' => (float) $monthlyBankTransfers,
+                        'total' => (float) $totalBankTransfers
+                    ],
+                    'reward_passes' => [
+                        'daily' => $dailyRewardPasses,
+                        'monthly' => $monthlyRewardPasses,
+                        'total' => $totalRewardPasses
                     ]
-                ];
-            });
-
-            // Calculate summary for the leader
-            $summary = [
-                'total_agents' => $agentsData->count(),
-                'total_shops_today' => $agentsData->sum(fn($agent) => $agent['counts']['shop_onboarding']['daily']),
-                'total_shops_this_month' => $agentsData->sum(fn($agent) => $agent['counts']['shop_onboarding']['monthly']),
-                'total_shops_all_time' => $agentsData->sum(fn($agent) => $agent['counts']['shop_onboarding']['total']),
-                'total_bt_today' => $agentsData->sum(fn($agent) => $agent['counts']['bank_transfers']['daily']),
-                'total_bt_this_month' => $agentsData->sum(fn($agent) => $agent['counts']['bank_transfers']['monthly']),
-                'total_bt_all_time' => $agentsData->sum(fn($agent) => $agent['counts']['bank_transfers']['total']),
-                'total_reward_passes_today' => $agentsData->sum(fn($agent) => $agent['counts']['reward_passes']['daily']),
-                'total_reward_passes_this_month' => $agentsData->sum(fn($agent) => $agent['counts']['reward_passes']['monthly']),
-                'total_reward_passes_all_time' => $agentsData->sum(fn($agent) => $agent['counts']['reward_passes']['total'])
+                ]
             ];
+        });
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Agents retrieved successfully',
-                'data' => $agentsData,
-                'summary' => $summary
-            ]);
-        }
+        // Calculate summary for the leader
+        $summary = [
+            'total_agents' => $agentsData->count(),
+            'total_shops_today' => $agentsData->sum(fn($agent) => $agent['counts']['shop_onboarding']['daily']),
+            'total_shops_this_month' => $agentsData->sum(fn($agent) => $agent['counts']['shop_onboarding']['monthly']),
+            'total_shops_all_time' => $agentsData->sum(fn($agent) => $agent['counts']['shop_onboarding']['total']),
+            'total_bt_today' => (float) $agentsData->sum(fn($agent) => $agent['counts']['bank_transfers']['daily']),
+            'total_bt_this_month' => (float) $agentsData->sum(fn($agent) => $agent['counts']['bank_transfers']['monthly']),
+            'total_bt_all_time' => (float) $agentsData->sum(fn($agent) => $agent['counts']['bank_transfers']['total']),
+            'total_reward_passes_today' => $agentsData->sum(fn($agent) => $agent['counts']['reward_passes']['daily']),
+            'total_reward_passes_this_month' => $agentsData->sum(fn($agent) => $agent['counts']['reward_passes']['monthly']),
+            'total_reward_passes_all_time' => $agentsData->sum(fn($agent) => $agent['counts']['reward_passes']['total'])
+        ];
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Agents retrieved successfully',
+            'data' => $agentsData,
+            'summary' => $summary
+        ]);
+    }
 
     /**
      * Get my parent (leader for agent, admin for leader)
@@ -241,8 +293,9 @@ class HierarchyController extends Controller
 
         $admin = $request->user();
         $leaders = $admin->leaders()->with([
-            'agents.shops.bankTransfers',
-            'agents.bankTransfers'
+            'agents.shops',
+            'agents.bankTransfers',
+            'agents.rewardPasses'
         ])->get();
 
         $totalAgents = $leaders->sum(function($leader) {
@@ -261,6 +314,12 @@ class HierarchyController extends Controller
             });
         });
 
+        $totalRewardPasses = $leaders->sum(function($leader) {
+            return $leader->agents->sum(function($agent) {
+                return $agent->rewardPasses->where('status', 'approved')->count();
+            });
+        });
+
         return response()->json([
             'success' => true,
             'message' => 'Complete hierarchy retrieved successfully',
@@ -271,7 +330,8 @@ class HierarchyController extends Controller
                     'total_leaders' => $leaders->count(),
                     'total_agents' => $totalAgents,
                     'total_shops' => $totalShops,
-                    'total_bank_transfers' => $totalBankTransfers
+                    'total_bank_transfers' => (float) $totalBankTransfers,
+                    'total_reward_passes' => $totalRewardPasses
                 ]
             ]
         ]);
