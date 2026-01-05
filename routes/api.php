@@ -194,8 +194,8 @@ Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
             Route::get('/monthly', [ReportController::class, 'getBankTransferMonthlyReport']);
         });
 
-        // TL Team Reports (Leader only)
-        Route::middleware('role:leader')->prefix('tl')->group(function () {
+        // TL Team Reports (Leader and Admin)
+        Route::middleware('role:leader,admin')->prefix('tl')->group(function () {
             Route::get('/daily', [ReportController::class, 'getTLDailyReport']);
         });
     });

@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Shop;
 use App\Models\BankTransfer;
 use App\Models\RewardPass;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -377,32 +378,53 @@ class ReportController extends Controller
     /**
      * Get daily team report for a TL (Team Leader)
      * Shows all PSCs/agents under the TL with their daily statistics
+     * Admins can optionally specify a leader_id to view any TL's report
      */
     public function getTLDailyReport(Request $request)
     {
         $user = $request->user();
 
-        // Only leaders can access this endpoint
-        if ($user->role !== 'leader') {
+        // Only leaders and admins can access this endpoint
+        if (!in_array($user->role, ['leader', 'admin'])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Only team leaders can access this endpoint',
+                'message' => 'Only team leaders and admins can access this endpoint',
             ], 403);
+        }
+
+        // If admin, they can specify leader_id, otherwise use authenticated leader's ID
+        $leaderId = $user->role === 'admin' ? $request->input('leader_id') : $user->id;
+
+        // If admin didn't specify leader_id, return error
+        if ($user->role === 'admin' && !$leaderId) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Admin must specify leader_id parameter',
+            ], 400);
+        }
+
+        // Get the leader details
+        $leader = User::find($leaderId);
+        if (!$leader || $leader->role !== 'leader') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid leader ID',
+            ], 404);
         }
 
         // Get date (default to today)
         $date = $request->input('date', date('Y-m-d'));
 
         // Get all agents under this leader
-        $agents = $user->agents()->get();
+        $agents = $leader->agents()->get();
 
         if ($agents->isEmpty()) {
             return response()->json([
                 'success' => true,
                 'message' => 'No agents found under this team leader',
                 'data' => [
-                    'leader_id' => $user->id,
-                    'leader_name' => $user->name,
+                    'leader_id' => $leader->id,
+                    'leader_name' => $leader->name,
                     'date' => $date,
                     'day_name' => Carbon::parse($date)->format('l'),
                     'summary' => [
@@ -470,8 +492,8 @@ class ReportController extends Controller
             'success' => true,
             'message' => 'TL daily report retrieved successfully',
             'data' => [
-                'leader_id' => $user->id,
-                'leader_name' => $user->name,
+                'leader_id' => $leader->id,
+                'leader_name' => $leader->name,
                 'date' => $date,
                 'day_name' => Carbon::parse($date)->format('l'),
                 'summary' => [
