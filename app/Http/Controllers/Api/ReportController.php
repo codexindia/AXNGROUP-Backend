@@ -373,4 +373,116 @@ class ReportController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Get daily team report for a TL (Team Leader)
+     * Shows all PSCs/agents under the TL with their daily statistics
+     */
+    public function getTLDailyReport(Request $request)
+    {
+        $user = $request->user();
+
+        // Only leaders can access this endpoint
+        if ($user->role !== 'leader') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only team leaders can access this endpoint',
+            ], 403);
+        }
+
+        // Get date (default to today)
+        $date = $request->input('date', date('Y-m-d'));
+
+        // Get all agents under this leader
+        $agents = $user->agents()->get();
+
+        if ($agents->isEmpty()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No agents found under this team leader',
+                'data' => [
+                    'leader_id' => $user->id,
+                    'leader_name' => $user->name,
+                    'date' => $date,
+                    'day_name' => Carbon::parse($date)->format('l'),
+                    'summary' => [
+                        'total_psc_count' => 0,
+                        'total_bank_transfer' => 0,
+                        'total_bank_charge' => 0,
+                        'total_onboarding' => 0,
+                        'total_reward_pass' => 0,
+                    ],
+                    'psc_records' => []
+                ]
+            ]);
+        }
+
+        $agentIds = $agents->pluck('id')->toArray();
+
+        // Initialize totals
+        $totalBankTransfer = 0;
+        $totalBankCharge = 0;
+        $totalOnboarding = 0;
+        $totalRewardPass = 0;
+
+        // Build PSC records
+        $pscRecords = $agents->map(function ($agent) use ($date, &$totalBankTransfer, &$totalBankCharge, &$totalOnboarding, &$totalRewardPass) {
+            // Get onboarding count for this agent on this date
+            $onboardingCount = Shop::where('agent_id', $agent->id)
+                ->whereDate('created_at', $date)
+                ->where('status', 'approved')
+                ->count();
+
+            // Get bank transfers for this agent on this date
+            $bankTransfers = BankTransfer::where('agent_id', $agent->id)
+                ->whereDate('created_at', $date)
+                ->where('status', 'approved')
+                ->get();
+
+            $bankTransferAmount = $bankTransfers->sum('amount');
+            
+            // Calculate bank charge (1.5% of bank transfer amount)
+            $bankCharge = $bankTransferAmount * 0.015;
+
+            // Get reward pass count for this agent on this date
+            $rewardPassCount = RewardPass::where('agent_id', $agent->id)
+                ->whereDate('created_at', $date)
+                ->where('status', 'approved')
+                ->count();
+
+            // Add to totals
+            $totalBankTransfer += $bankTransferAmount;
+            $totalBankCharge += $bankCharge;
+            $totalOnboarding += $onboardingCount;
+            $totalRewardPass += $rewardPassCount;
+
+            return [
+                'psc_name' => $agent->name,
+                'psc_id' => $agent->unique_id ?? $agent->id,
+                'psc_onboarding' => $onboardingCount,
+                'bank_trn' => (float) $bankTransferAmount,
+                'bank_trn_fee' => (float) $bankCharge,
+                'reward_pass' => $rewardPassCount,
+            ];
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'TL daily report retrieved successfully',
+            'data' => [
+                'leader_id' => $user->id,
+                'leader_name' => $user->name,
+                'date' => $date,
+                'day_name' => Carbon::parse($date)->format('l'),
+                'summary' => [
+                    'total_psc_count' => $agents->count(),
+                    'total_bank_transfer' => (float) $totalBankTransfer,
+                    'total_bank_charge' => (float) $totalBankCharge,
+                    'total_onboarding' => $totalOnboarding,
+                    'total_reward_pass' => $totalRewardPass,
+                ],
+                'psc_records' => $pscRecords
+            ]
+        ]);
+    }
 }

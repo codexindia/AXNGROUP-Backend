@@ -193,6 +193,11 @@ Route::middleware(['auth:sanctum', 'check.blocked'])->group(function () {
             Route::get('/daily', [ReportController::class, 'getBankTransferDailyReport']);
             Route::get('/monthly', [ReportController::class, 'getBankTransferMonthlyReport']);
         });
+
+        // TL Team Reports (Leader only)
+        Route::middleware('role:leader')->prefix('tl')->group(function () {
+            Route::get('/daily', [ReportController::class, 'getTLDailyReport']);
+        });
     });
 });
 // Google Sheets Integration Routes
