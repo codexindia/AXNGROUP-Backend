@@ -437,6 +437,14 @@ class ReportController extends Controller
                         'total_onboarding_pending' => 0,
                         'total_reward_pass_approved' => 0,
                         'total_reward_pass_pending' => 0,
+                        'lifetime_bank_transfer_approved' => 0,
+                        'lifetime_bank_transfer_pending' => 0,
+                        'lifetime_bank_charge_approved' => 0,
+                        'lifetime_bank_charge_pending' => 0,
+                        'lifetime_onboarding_approved' => 0,
+                        'lifetime_onboarding_pending' => 0,
+                        'lifetime_reward_pass_approved' => 0,
+                        'lifetime_reward_pass_pending' => 0,
                     ],
                     'psc_records' => []
                 ]
@@ -445,20 +453,32 @@ class ReportController extends Controller
 
         $agentIds = $agents->pluck('id')->toArray();
 
-        // Initialize totals for approved
+        // Initialize daily totals for approved
         $totalBankTransferApproved = 0;
         $totalBankChargeApproved = 0;
         $totalOnboardingApproved = 0;
         $totalRewardPassApproved = 0;
 
-        // Initialize totals for pending
+        // Initialize daily totals for pending
         $totalBankTransferPending = 0;
         $totalBankChargePending = 0;
         $totalOnboardingPending = 0;
         $totalRewardPassPending = 0;
 
+        // Initialize lifetime totals for approved
+        $lifetimeBankTransferApproved = 0;
+        $lifetimeBankChargeApproved = 0;
+        $lifetimeOnboardingApproved = 0;
+        $lifetimeRewardPassApproved = 0;
+
+        // Initialize lifetime totals for pending
+        $lifetimeBankTransferPending = 0;
+        $lifetimeBankChargePending = 0;
+        $lifetimeOnboardingPending = 0;
+        $lifetimeRewardPassPending = 0;
+
         // Build PSC records
-        $pscRecords = $agents->map(function ($agent) use ($date, &$totalBankTransferApproved, &$totalBankChargeApproved, &$totalOnboardingApproved, &$totalRewardPassApproved, &$totalBankTransferPending, &$totalBankChargePending, &$totalOnboardingPending, &$totalRewardPassPending) {
+        $pscRecords = $agents->map(function ($agent) use ($date, &$totalBankTransferApproved, &$totalBankChargeApproved, &$totalOnboardingApproved, &$totalRewardPassApproved, &$totalBankTransferPending, &$totalBankChargePending, &$totalOnboardingPending, &$totalRewardPassPending, &$lifetimeBankTransferApproved, &$lifetimeBankChargeApproved, &$lifetimeOnboardingApproved, &$lifetimeRewardPassApproved, &$lifetimeBankTransferPending, &$lifetimeBankChargePending, &$lifetimeOnboardingPending, &$lifetimeRewardPassPending) {
             // Get approved onboarding count for this agent on this date
             $onboardingApprovedCount = Shop::where('agent_id', $agent->id)
                 ->whereDate('created_at', $date)
@@ -503,29 +523,83 @@ class ReportController extends Controller
                 ->where('status', 'pending')
                 ->count();
 
-            // Add to approved totals
+            // Get lifetime approved onboarding count for this agent
+            $lifetimeOnboardingApprovedCount = Shop::where('agent_id', $agent->id)
+                ->where('status', 'approved')
+                ->count();
+
+            // Get lifetime pending onboarding count for this agent
+            $lifetimeOnboardingPendingCount = Shop::where('agent_id', $agent->id)
+                ->where('status', 'pending')
+                ->count();
+
+            // Get lifetime approved bank transfers for this agent
+            $lifetimeBankTransferApprovedAmount = BankTransfer::where('agent_id', $agent->id)
+                ->where('status', 'approved')
+                ->sum('amount');
+
+            // Get lifetime pending bank transfers for this agent
+            $lifetimeBankTransferPendingAmount = BankTransfer::where('agent_id', $agent->id)
+                ->where('status', 'pending')
+                ->sum('amount');
+
+            // Calculate lifetime bank charge (1.5% of bank transfer amount)
+            $lifetimeBankChargeApprovedAmount = $lifetimeBankTransferApprovedAmount * 0.015;
+            $lifetimeBankChargePendingAmount = $lifetimeBankTransferPendingAmount * 0.015;
+
+            // Get lifetime approved reward pass count for this agent
+            $lifetimeRewardPassApprovedCount = RewardPass::where('agent_id', $agent->id)
+                ->where('status', 'approved')
+                ->count();
+
+            // Get lifetime pending reward pass count for this agent
+            $lifetimeRewardPassPendingCount = RewardPass::where('agent_id', $agent->id)
+                ->where('status', 'pending')
+                ->count();
+
+            // Add to daily approved totals
             $totalBankTransferApproved += $bankTransferApprovedAmount;
             $totalBankChargeApproved += $bankChargeApproved;
             $totalOnboardingApproved += $onboardingApprovedCount;
             $totalRewardPassApproved += $rewardPassApprovedCount;
 
-            // Add to pending totals
+            // Add to daily pending totals
             $totalBankTransferPending += $bankTransferPendingAmount;
             $totalBankChargePending += $bankChargePending;
             $totalOnboardingPending += $onboardingPendingCount;
             $totalRewardPassPending += $rewardPassPendingCount;
+
+            // Add to lifetime approved totals
+            $lifetimeBankTransferApproved += $lifetimeBankTransferApprovedAmount;
+            $lifetimeBankChargeApproved += $lifetimeBankChargeApprovedAmount;
+            $lifetimeOnboardingApproved += $lifetimeOnboardingApprovedCount;
+            $lifetimeRewardPassApproved += $lifetimeRewardPassApprovedCount;
+
+            // Add to lifetime pending totals
+            $lifetimeBankTransferPending += $lifetimeBankTransferPendingAmount;
+            $lifetimeBankChargePending += $lifetimeBankChargePendingAmount;
+            $lifetimeOnboardingPending += $lifetimeOnboardingPendingCount;
+            $lifetimeRewardPassPending += $lifetimeRewardPassPendingCount;
 
             return [
                 'psc_name' => $agent->name,
                 'psc_id' => $agent->unique_id ?? $agent->id,
                 'psc_onboarding_approved' => $onboardingApprovedCount,
                 'psc_onboarding_pending' => $onboardingPendingCount,
+                'psc_onboarding_lifetime_approved' => $lifetimeOnboardingApprovedCount,
+                'psc_onboarding_lifetime_pending' => $lifetimeOnboardingPendingCount,
                 'bank_trn_approved' => (float) $bankTransferApprovedAmount,
                 'bank_trn_pending' => (float) $bankTransferPendingAmount,
+                'bank_trn_lifetime_approved' => (float) $lifetimeBankTransferApprovedAmount,
+                'bank_trn_lifetime_pending' => (float) $lifetimeBankTransferPendingAmount,
                 'bank_trn_fee_approved' => (float) $bankChargeApproved,
                 'bank_trn_fee_pending' => (float) $bankChargePending,
+                'bank_trn_fee_lifetime_approved' => (float) $lifetimeBankChargeApprovedAmount,
+                'bank_trn_fee_lifetime_pending' => (float) $lifetimeBankChargePendingAmount,
                 'reward_pass_approved' => $rewardPassApprovedCount,
                 'reward_pass_pending' => $rewardPassPendingCount,
+                'reward_pass_lifetime_approved' => $lifetimeRewardPassApprovedCount,
+                'reward_pass_lifetime_pending' => $lifetimeRewardPassPendingCount,
             ];
         })->values();
 
@@ -547,6 +621,14 @@ class ReportController extends Controller
                     'total_onboarding_pending' => $totalOnboardingPending,
                     'total_reward_pass_approved' => $totalRewardPassApproved,
                     'total_reward_pass_pending' => $totalRewardPassPending,
+                    'lifetime_bank_transfer_approved' => (float) $lifetimeBankTransferApproved,
+                    'lifetime_bank_transfer_pending' => (float) $lifetimeBankTransferPending,
+                    'lifetime_bank_charge_approved' => (float) $lifetimeBankChargeApproved,
+                    'lifetime_bank_charge_pending' => (float) $lifetimeBankChargePending,
+                    'lifetime_onboarding_approved' => $lifetimeOnboardingApproved,
+                    'lifetime_onboarding_pending' => $lifetimeOnboardingPending,
+                    'lifetime_reward_pass_approved' => $lifetimeRewardPassApproved,
+                    'lifetime_reward_pass_pending' => $lifetimeRewardPassPending,
                 ],
                 'psc_records' => $pscRecords
             ]
