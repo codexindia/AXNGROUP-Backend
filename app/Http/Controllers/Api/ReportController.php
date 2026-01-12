@@ -72,6 +72,30 @@ class ReportController extends Controller
             ];
         });
 
+        // Get lifetime onboarding counts for this agent
+        $lifetimeOnboardingApproved = Shop::where('agent_id', $agentId)
+            ->where('status', 'approved')
+            ->count();
+        $lifetimeOnboardingPending = Shop::where('agent_id', $agentId)
+            ->where('status', 'pending')
+            ->count();
+
+        // Get lifetime bank transfer for this agent
+        $lifetimeBankTransferApproved = BankTransfer::where('agent_id', $agentId)
+            ->where('status', 'approved')
+            ->sum('amount');
+        $lifetimeBankTransferPending = BankTransfer::where('agent_id', $agentId)
+            ->where('status', 'pending')
+            ->sum('amount');
+
+        // Get lifetime reward pass for this agent
+        $lifetimeRewardPassApproved = RewardPass::where('agent_id', $agentId)
+            ->where('status', 'approved')
+            ->count();
+        $lifetimeRewardPassPending = RewardPass::where('agent_id', $agentId)
+            ->where('status', 'pending')
+            ->count();
+
         // Get monthly summary
         $summary = [
             'total_onboarding' => $totalOnboarding,
@@ -79,6 +103,12 @@ class ReportController extends Controller
             'pending' => $pending,
             'rejected' => $rejected,
             'total_qr_trx' => $totalQrTrx,
+            'lifetime_onboarding_approved' => $lifetimeOnboardingApproved,
+            'lifetime_onboarding_pending' => $lifetimeOnboardingPending,
+            'lifetime_bank_transfer_approved' => (float) $lifetimeBankTransferApproved,
+            'lifetime_bank_transfer_pending' => (float) $lifetimeBankTransferPending,
+            'lifetime_reward_pass_approved' => $lifetimeRewardPassApproved,
+            'lifetime_reward_pass_pending' => $lifetimeRewardPassPending,
         ];
 
         return response()->json([
@@ -162,6 +192,30 @@ class ReportController extends Controller
             return array_merge(['sn' => $sn], $customer);
         });
 
+        // Get lifetime onboarding counts for this agent
+        $lifetimeOnboardingApproved = Shop::where('agent_id', $agentId)
+            ->where('status', 'approved')
+            ->count();
+        $lifetimeOnboardingPending = Shop::where('agent_id', $agentId)
+            ->where('status', 'pending')
+            ->count();
+
+        // Get lifetime bank transfer for this agent
+        $lifetimeBankTransferApproved = BankTransfer::where('agent_id', $agentId)
+            ->where('status', 'approved')
+            ->sum('amount');
+        $lifetimeBankTransferPending = BankTransfer::where('agent_id', $agentId)
+            ->where('status', 'pending')
+            ->sum('amount');
+
+        // Get lifetime reward pass for this agent
+        $lifetimeRewardPassApproved = RewardPass::where('agent_id', $agentId)
+            ->where('status', 'approved')
+            ->count();
+        $lifetimeRewardPassPending = RewardPass::where('agent_id', $agentId)
+            ->where('status', 'pending')
+            ->count();
+
         // Get monthly summary
         $summary = [
             'total_customers' => $allCustomerData->count(),
@@ -174,6 +228,12 @@ class ReportController extends Controller
             'active_reward_passes' => RewardPass::whereIn('customer_mobile', $allCustomerData->pluck('mobile_no'))
                 ->where('status', 'approved')
                 ->count(),
+            'lifetime_onboarding_approved' => $lifetimeOnboardingApproved,
+            'lifetime_onboarding_pending' => $lifetimeOnboardingPending,
+            'lifetime_bank_transfer_approved' => (float) $lifetimeBankTransferApproved,
+            'lifetime_bank_transfer_pending' => (float) $lifetimeBankTransferPending,
+            'lifetime_reward_pass_approved' => $lifetimeRewardPassApproved,
+            'lifetime_reward_pass_pending' => $lifetimeRewardPassPending,
         ];
 
         return response()->json([
@@ -255,6 +315,30 @@ class ReportController extends Controller
             ];
         });
 
+        // Get lifetime onboarding counts for this agent
+        $lifetimeOnboardingApproved = Shop::where('agent_id', $agentId)
+            ->where('status', 'approved')
+            ->count();
+        $lifetimeOnboardingPending = Shop::where('agent_id', $agentId)
+            ->where('status', 'pending')
+            ->count();
+
+        // Get lifetime bank transfer for this agent
+        $lifetimeBankTransferApproved = BankTransfer::where('agent_id', $agentId)
+            ->where('status', 'approved')
+            ->sum('amount');
+        $lifetimeBankTransferPending = BankTransfer::where('agent_id', $agentId)
+            ->where('status', 'pending')
+            ->sum('amount');
+
+        // Get lifetime reward pass for this agent
+        $lifetimeRewardPassApproved = RewardPass::where('agent_id', $agentId)
+            ->where('status', 'approved')
+            ->count();
+        $lifetimeRewardPassPending = RewardPass::where('agent_id', $agentId)
+            ->where('status', 'pending')
+            ->count();
+
         // Get daily summary
         $summary = [
             'total_onboarding' => $totalOnboarding,
@@ -262,6 +346,12 @@ class ReportController extends Controller
             'pending' => $pending,
             'rejected' => $rejected,
             'total_qr_trx' => $totalQrTrx,
+            'lifetime_onboarding_approved' => $lifetimeOnboardingApproved,
+            'lifetime_onboarding_pending' => $lifetimeOnboardingPending,
+            'lifetime_bank_transfer_approved' => (float) $lifetimeBankTransferApproved,
+            'lifetime_bank_transfer_pending' => (float) $lifetimeBankTransferPending,
+            'lifetime_reward_pass_approved' => $lifetimeRewardPassApproved,
+            'lifetime_reward_pass_pending' => $lifetimeRewardPassPending,
         ];
 
         return response()->json([
@@ -340,6 +430,30 @@ class ReportController extends Controller
             return array_merge(['sn' => $sn], $customer);
         });
 
+        // Get lifetime onboarding counts for this agent
+        $lifetimeOnboardingApproved = Shop::where('agent_id', $agentId)
+            ->where('status', 'approved')
+            ->count();
+        $lifetimeOnboardingPending = Shop::where('agent_id', $agentId)
+            ->where('status', 'pending')
+            ->count();
+
+        // Get lifetime bank transfer for this agent
+        $lifetimeBankTransferApproved = BankTransfer::where('agent_id', $agentId)
+            ->where('status', 'approved')
+            ->sum('amount');
+        $lifetimeBankTransferPending = BankTransfer::where('agent_id', $agentId)
+            ->where('status', 'pending')
+            ->sum('amount');
+
+        // Get lifetime reward pass for this agent
+        $lifetimeRewardPassApproved = RewardPass::where('agent_id', $agentId)
+            ->where('status', 'approved')
+            ->count();
+        $lifetimeRewardPassPending = RewardPass::where('agent_id', $agentId)
+            ->where('status', 'pending')
+            ->count();
+
         // Get daily summary
         $summary = [
             'total_customers' => $allCustomerData->count(),
@@ -352,6 +466,12 @@ class ReportController extends Controller
             'active_reward_passes' => RewardPass::whereIn('customer_mobile', $allCustomerData->pluck('mobile_no'))
                 ->where('status', 'approved')
                 ->count(),
+            'lifetime_onboarding_approved' => $lifetimeOnboardingApproved,
+            'lifetime_onboarding_pending' => $lifetimeOnboardingPending,
+            'lifetime_bank_transfer_approved' => (float) $lifetimeBankTransferApproved,
+            'lifetime_bank_transfer_pending' => (float) $lifetimeBankTransferPending,
+            'lifetime_reward_pass_approved' => $lifetimeRewardPassApproved,
+            'lifetime_reward_pass_pending' => $lifetimeRewardPassPending,
         ];
 
         return response()->json([
