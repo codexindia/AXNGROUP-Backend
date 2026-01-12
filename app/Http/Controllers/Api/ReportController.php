@@ -429,10 +429,14 @@ class ReportController extends Controller
                     'day_name' => Carbon::parse($date)->format('l'),
                     'summary' => [
                         'total_psc_count' => 0,
-                        'total_bank_transfer' => 0,
-                        'total_bank_charge' => 0,
-                        'total_onboarding' => 0,
-                        'total_reward_pass' => 0,
+                        'total_bank_transfer_approved' => 0,
+                        'total_bank_transfer_pending' => 0,
+                        'total_bank_charge_approved' => 0,
+                        'total_bank_charge_pending' => 0,
+                        'total_onboarding_approved' => 0,
+                        'total_onboarding_pending' => 0,
+                        'total_reward_pass_approved' => 0,
+                        'total_reward_pass_pending' => 0,
                     ],
                     'psc_records' => []
                 ]
@@ -441,50 +445,87 @@ class ReportController extends Controller
 
         $agentIds = $agents->pluck('id')->toArray();
 
-        // Initialize totals
-        $totalBankTransfer = 0;
-        $totalBankCharge = 0;
-        $totalOnboarding = 0;
-        $totalRewardPass = 0;
+        // Initialize totals for approved
+        $totalBankTransferApproved = 0;
+        $totalBankChargeApproved = 0;
+        $totalOnboardingApproved = 0;
+        $totalRewardPassApproved = 0;
+
+        // Initialize totals for pending
+        $totalBankTransferPending = 0;
+        $totalBankChargePending = 0;
+        $totalOnboardingPending = 0;
+        $totalRewardPassPending = 0;
 
         // Build PSC records
-        $pscRecords = $agents->map(function ($agent) use ($date, &$totalBankTransfer, &$totalBankCharge, &$totalOnboarding, &$totalRewardPass) {
-            // Get onboarding count for this agent on this date
-            $onboardingCount = Shop::where('agent_id', $agent->id)
+        $pscRecords = $agents->map(function ($agent) use ($date, &$totalBankTransferApproved, &$totalBankChargeApproved, &$totalOnboardingApproved, &$totalRewardPassApproved, &$totalBankTransferPending, &$totalBankChargePending, &$totalOnboardingPending, &$totalRewardPassPending) {
+            // Get approved onboarding count for this agent on this date
+            $onboardingApprovedCount = Shop::where('agent_id', $agent->id)
                 ->whereDate('created_at', $date)
                 ->where('status', 'approved')
                 ->count();
 
-            // Get bank transfers for this agent on this date
-            $bankTransfers = BankTransfer::where('agent_id', $agent->id)
+            // Get pending onboarding count for this agent on this date
+            $onboardingPendingCount = Shop::where('agent_id', $agent->id)
+                ->whereDate('created_at', $date)
+                ->where('status', 'pending')
+                ->count();
+
+            // Get approved bank transfers for this agent on this date
+            $bankTransfersApproved = BankTransfer::where('agent_id', $agent->id)
                 ->whereDate('created_at', $date)
                 ->where('status', 'approved')
                 ->get();
 
-            $bankTransferAmount = $bankTransfers->sum('amount');
+            $bankTransferApprovedAmount = $bankTransfersApproved->sum('amount');
+            
+            // Get pending bank transfers for this agent on this date
+            $bankTransfersPending = BankTransfer::where('agent_id', $agent->id)
+                ->whereDate('created_at', $date)
+                ->where('status', 'pending')
+                ->get();
+
+            $bankTransferPendingAmount = $bankTransfersPending->sum('amount');
             
             // Calculate bank charge (1.5% of bank transfer amount)
-            $bankCharge = $bankTransferAmount * 0.015;
+            $bankChargeApproved = $bankTransferApprovedAmount * 0.015;
+            $bankChargePending = $bankTransferPendingAmount * 0.015;
 
-            // Get reward pass count for this agent on this date
-            $rewardPassCount = RewardPass::where('agent_id', $agent->id)
+            // Get approved reward pass count for this agent on this date
+            $rewardPassApprovedCount = RewardPass::where('agent_id', $agent->id)
                 ->whereDate('created_at', $date)
                 ->where('status', 'approved')
                 ->count();
 
-            // Add to totals
-            $totalBankTransfer += $bankTransferAmount;
-            $totalBankCharge += $bankCharge;
-            $totalOnboarding += $onboardingCount;
-            $totalRewardPass += $rewardPassCount;
+            // Get pending reward pass count for this agent on this date
+            $rewardPassPendingCount = RewardPass::where('agent_id', $agent->id)
+                ->whereDate('created_at', $date)
+                ->where('status', 'pending')
+                ->count();
+
+            // Add to approved totals
+            $totalBankTransferApproved += $bankTransferApprovedAmount;
+            $totalBankChargeApproved += $bankChargeApproved;
+            $totalOnboardingApproved += $onboardingApprovedCount;
+            $totalRewardPassApproved += $rewardPassApprovedCount;
+
+            // Add to pending totals
+            $totalBankTransferPending += $bankTransferPendingAmount;
+            $totalBankChargePending += $bankChargePending;
+            $totalOnboardingPending += $onboardingPendingCount;
+            $totalRewardPassPending += $rewardPassPendingCount;
 
             return [
                 'psc_name' => $agent->name,
                 'psc_id' => $agent->unique_id ?? $agent->id,
-                'psc_onboarding' => $onboardingCount,
-                'bank_trn' => (float) $bankTransferAmount,
-                'bank_trn_fee' => (float) $bankCharge,
-                'reward_pass' => $rewardPassCount,
+                'psc_onboarding_approved' => $onboardingApprovedCount,
+                'psc_onboarding_pending' => $onboardingPendingCount,
+                'bank_trn_approved' => (float) $bankTransferApprovedAmount,
+                'bank_trn_pending' => (float) $bankTransferPendingAmount,
+                'bank_trn_fee_approved' => (float) $bankChargeApproved,
+                'bank_trn_fee_pending' => (float) $bankChargePending,
+                'reward_pass_approved' => $rewardPassApprovedCount,
+                'reward_pass_pending' => $rewardPassPendingCount,
             ];
         })->values();
 
@@ -498,10 +539,14 @@ class ReportController extends Controller
                 'day_name' => Carbon::parse($date)->format('l'),
                 'summary' => [
                     'total_psc_count' => $agents->count(),
-                    'total_bank_transfer' => (float) $totalBankTransfer,
-                    'total_bank_charge' => (float) $totalBankCharge,
-                    'total_onboarding' => $totalOnboarding,
-                    'total_reward_pass' => $totalRewardPass,
+                    'total_bank_transfer_approved' => (float) $totalBankTransferApproved,
+                    'total_bank_transfer_pending' => (float) $totalBankTransferPending,
+                    'total_bank_charge_approved' => (float) $totalBankChargeApproved,
+                    'total_bank_charge_pending' => (float) $totalBankChargePending,
+                    'total_onboarding_approved' => $totalOnboardingApproved,
+                    'total_onboarding_pending' => $totalOnboardingPending,
+                    'total_reward_pass_approved' => $totalRewardPassApproved,
+                    'total_reward_pass_pending' => $totalRewardPassPending,
                 ],
                 'psc_records' => $pscRecords
             ]
