@@ -535,48 +535,67 @@ class ShopController extends Controller
         }
 
         $agentId = $request->user()->id;
-
-        // Shop onboarding statistics
-        $totalShops = Shop::where('agent_id', $agentId)->count();
-        $approvedShops = Shop::where('agent_id', $agentId)->where('status', 'approved')->count();
-        $pendingShops = Shop::where('agent_id', $agentId)->where('status', 'pending')->count();
-        $rejectedShops = Shop::where('agent_id', $agentId)->where('status', 'rejected')->count();
-
-        // Bank transfer statistics
-        $totalBankTransfers = \App\Models\BankTransfer::where('agent_id', $agentId)->count();
-        $approvedBankTransfers = \App\Models\BankTransfer::where('agent_id', $agentId)->where('status', 'approved')->count();
-        $pendingBankTransfers = \App\Models\BankTransfer::where('agent_id', $agentId)->where('status', 'pending')->count();
-        $rejectedBankTransfers = \App\Models\BankTransfer::where('agent_id', $agentId)->where('status', 'rejected')->count();
-        $totalBankTransferAmount = \App\Models\BankTransfer::where('agent_id', $agentId)->where('status', 'approved')->sum('amount') ?? 0;
-
-        // Reward pass statistics
-        $totalRewardPasses = \App\Models\RewardPass::where('agent_id', $agentId)->count();
-        $approvedRewardPasses = \App\Models\RewardPass::where('agent_id', $agentId)->where('status', 'approved')->count();
-        $pendingRewardPasses = \App\Models\RewardPass::where('agent_id', $agentId)->where('status', 'pending')->count();
-        $rejectedRewardPasses = \App\Models\RewardPass::where('agent_id', $agentId)->where('status', 'rejected')->count();
-
-        // Monthly statistics (current month)
         $currentMonth = Carbon::now();
+
+        // Shop onboarding statistics (optimized single query)
+        $shopStats = Shop::where('agent_id', $agentId)
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN status = "approved" THEN 1 ELSE 0 END) as approved')
+            ->selectRaw('SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pending')
+            ->selectRaw('SUM(CASE WHEN status = "rejected" THEN 1 ELSE 0 END) as rejected')
+            ->first();
+
+        $totalShops = $shopStats->total ?? 0;
+        $approvedShops = $shopStats->approved ?? 0;
+        $pendingShops = $shopStats->pending ?? 0;
+        $rejectedShops = $shopStats->rejected ?? 0;
+
+        // Bank transfer statistics (optimized single query - amounts only)
+        $bankTransferStats = \App\Models\BankTransfer::where('agent_id', $agentId)
+            ->selectRaw('SUM(CASE WHEN status = "approved" THEN amount ELSE 0 END) as approved_amount')
+            ->selectRaw('SUM(CASE WHEN status = "pending" THEN amount ELSE 0 END) as pending_amount')
+            ->selectRaw('SUM(CASE WHEN status = "rejected" THEN amount ELSE 0 END) as rejected_amount')
+            ->first();
+
+        $approvedBankTransferAmount = $bankTransferStats->approved_amount ?? 0;
+        $pendingBankTransferAmount = $bankTransferStats->pending_amount ?? 0;
+        $rejectedBankTransferAmount = $bankTransferStats->rejected_amount ?? 0;
+
+        // Reward pass statistics (optimized single query)
+        $rewardPassStats = \App\Models\RewardPass::where('agent_id', $agentId)
+            ->selectRaw('COUNT(*) as total')
+            ->selectRaw('SUM(CASE WHEN status = "approved" THEN 1 ELSE 0 END) as approved')
+            ->selectRaw('SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pending')
+            ->selectRaw('SUM(CASE WHEN status = "rejected" THEN 1 ELSE 0 END) as rejected')
+            ->first();
+
+        $totalRewardPasses = $rewardPassStats->total ?? 0;
+        $approvedRewardPasses = $rewardPassStats->approved ?? 0;
+        $pendingRewardPasses = $rewardPassStats->pending ?? 0;
+        $rejectedRewardPasses = $rewardPassStats->rejected ?? 0;
+
+        // Monthly statistics (current month - optimized)
         $thisMonthShops = Shop::where('agent_id', $agentId)
-        ->where('status', 'approved')
-            ->whereMonth('created_at', $currentMonth->month)
-            ->whereYear('created_at', $currentMonth->year)
-            ->count();
-
-        $thisMonthBankTransfers = \App\Models\BankTransfer::where('agent_id', $agentId)
-        ->where('status', 'approved')
-            ->whereMonth('created_at', $currentMonth->month)
-            ->whereYear('created_at', $currentMonth->year)
-            ->count();
-
-        $thisMonthBankTransferAmount = \App\Models\BankTransfer::where('agent_id', $agentId)
             ->where('status', 'approved')
-            ->whereMonth('updated_at', $currentMonth->month)
-            ->whereYear('updated_at', $currentMonth->year)
-            ->sum('amount') ?? 0;
+            ->whereMonth('created_at', $currentMonth->month)
+            ->whereYear('created_at', $currentMonth->year)
+            ->count();
+
+        // Monthly bank transfer amounts (optimized single query)
+        $thisMonthBankTransferStats = \App\Models\BankTransfer::where('agent_id', $agentId)
+            ->whereMonth('created_at', $currentMonth->month)
+            ->whereYear('created_at', $currentMonth->year)
+            ->selectRaw('SUM(CASE WHEN status = "approved" THEN amount ELSE 0 END) as approved_amount')
+            ->selectRaw('SUM(CASE WHEN status = "pending" THEN amount ELSE 0 END) as pending_amount')
+            ->selectRaw('SUM(CASE WHEN status = "rejected" THEN amount ELSE 0 END) as rejected_amount')
+            ->first();
+
+        $thisMonthApprovedBankTransferAmount = $thisMonthBankTransferStats->approved_amount ?? 0;
+        $thisMonthPendingBankTransferAmount = $thisMonthBankTransferStats->pending_amount ?? 0;
+        $thisMonthRejectedBankTransferAmount = $thisMonthBankTransferStats->rejected_amount ?? 0;
 
         $thisMonthRewardPasses = \App\Models\RewardPass::where('agent_id', $agentId)
-        ->where('status', 'approved')
+            ->where('status', 'approved')
             ->whereMonth('created_at', $currentMonth->month)
             ->whereYear('created_at', $currentMonth->year)
             ->count();
@@ -601,14 +620,12 @@ class ShopController extends Controller
                     'this_month' => $thisMonthShops
                 ],
                 'bank_transfers' => [
-                    'total' => $totalBankTransfers,
-                    'approved' => $approvedBankTransfers,
-                    'pending' => $pendingBankTransfers,
-                    'rejected' => $rejectedBankTransfers,
-                    'total_amount' => $totalBankTransferAmount,
-                    'this_month' => $thisMonthBankTransfers,
-                    'this_month_amount' => $thisMonthBankTransferAmount,
-
+                    'approved_amount' => $approvedBankTransferAmount,
+                    'pending_amount' => $pendingBankTransferAmount,
+                    'rejected_amount' => $rejectedBankTransferAmount,
+                    'this_month_approved_amount' => $thisMonthApprovedBankTransferAmount,
+                    'this_month_pending_amount' => $thisMonthPendingBankTransferAmount,
+                    'this_month_rejected_amount' => $thisMonthRejectedBankTransferAmount
                 ],
                 'reward_passes' => [
                     'total' => $totalRewardPasses,
@@ -618,12 +635,12 @@ class ShopController extends Controller
                     'this_month' => $thisMonthRewardPasses
                 ],
                 'summary' => [
-                    'total_activities' => $totalShops + $totalBankTransfers + $totalRewardPasses,
-                    'total_approved' => $approvedShops + $approvedBankTransfers + $approvedRewardPasses,
-                    'total_pending' => $pendingShops + $pendingBankTransfers + $pendingRewardPasses,
-                    'total_rejected' => $rejectedShops + $rejectedBankTransfers + $rejectedRewardPasses,
-                    'success_rate' => $totalShops + $totalBankTransfers + $totalRewardPasses > 0
-                        ? round((($approvedShops + $approvedBankTransfers + $approvedRewardPasses) / ($totalShops + $totalBankTransfers + $totalRewardPasses)) * 100, 2)
+                    'total_activities' => $totalShops + $totalRewardPasses,
+                    'total_approved' => $approvedShops + $approvedRewardPasses,
+                    'total_pending' => $pendingShops + $pendingRewardPasses,
+                    'total_rejected' => $rejectedShops + $rejectedRewardPasses,
+                    'success_rate' => ($totalShops + $totalRewardPasses) > 0
+                        ? round((($approvedShops + $approvedRewardPasses) / ($totalShops + $totalRewardPasses)) * 100, 2)
                         : 0
                 ]
             ]
