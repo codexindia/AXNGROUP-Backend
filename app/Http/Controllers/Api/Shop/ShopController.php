@@ -720,7 +720,43 @@ class ShopController extends Controller
             ->whereYear('created_at', $currentMonth->year)
             ->count();
 
+        $thisMonthApprovedShops = Shop::whereIn('agent_id', $agentIds)
+            ->where('status', 'approved')
+            ->whereMonth('created_at', $currentMonth->month)
+            ->whereYear('created_at', $currentMonth->year)
+            ->count();
+
+        $thisMonthPendingShops = Shop::whereIn('agent_id', $agentIds)
+            ->where('status', 'pending')
+            ->whereMonth('created_at', $currentMonth->month)
+            ->whereYear('created_at', $currentMonth->year)
+            ->count();
+
+        $thisMonthRejectedShops = Shop::whereIn('agent_id', $agentIds)
+            ->where('status', 'rejected')
+            ->whereMonth('created_at', $currentMonth->month)
+            ->whereYear('created_at', $currentMonth->year)
+            ->count();
+
         $thisMonthBankTransfers = \App\Models\BankTransfer::whereIn('agent_id', $agentIds)
+            ->whereMonth('created_at', $currentMonth->month)
+            ->whereYear('created_at', $currentMonth->year)
+            ->count();
+
+        $thisMonthApprovedBankTransfers = \App\Models\BankTransfer::whereIn('agent_id', $agentIds)
+            ->where('status', 'approved')
+            ->whereMonth('created_at', $currentMonth->month)
+            ->whereYear('created_at', $currentMonth->year)
+            ->count();
+
+        $thisMonthPendingBankTransfers = \App\Models\BankTransfer::whereIn('agent_id', $agentIds)
+            ->where('status', 'pending')
+            ->whereMonth('created_at', $currentMonth->month)
+            ->whereYear('created_at', $currentMonth->year)
+            ->count();
+
+        $thisMonthRejectedBankTransfers = \App\Models\BankTransfer::whereIn('agent_id', $agentIds)
+            ->where('status', 'rejected')
             ->whereMonth('created_at', $currentMonth->month)
             ->whereYear('created_at', $currentMonth->year)
             ->count();
@@ -732,6 +768,24 @@ class ShopController extends Controller
             ->sum('amount') ?? 0;
 
         $thisMonthRewardPasses = \App\Models\RewardPass::whereIn('agent_id', $agentIds)
+            ->whereMonth('created_at', $currentMonth->month)
+            ->whereYear('created_at', $currentMonth->year)
+            ->count();
+
+        $thisMonthApprovedRewardPasses = \App\Models\RewardPass::whereIn('agent_id', $agentIds)
+            ->where('status', 'approved')
+            ->whereMonth('created_at', $currentMonth->month)
+            ->whereYear('created_at', $currentMonth->year)
+            ->count();
+
+        $thisMonthPendingRewardPasses = \App\Models\RewardPass::whereIn('agent_id', $agentIds)
+            ->where('status', 'pending')
+            ->whereMonth('created_at', $currentMonth->month)
+            ->whereYear('created_at', $currentMonth->year)
+            ->count();
+
+        $thisMonthRejectedRewardPasses = \App\Models\RewardPass::whereIn('agent_id', $agentIds)
+            ->where('status', 'rejected')
             ->whereMonth('created_at', $currentMonth->month)
             ->whereYear('created_at', $currentMonth->year)
             ->count();
@@ -795,7 +849,10 @@ class ShopController extends Controller
                     'approved' => $approvedShops,
                     'pending' => $pendingShops,
                     'rejected' => $rejectedShops,
-                    'this_month' => $thisMonthShops
+                    'this_month' => $thisMonthShops,
+                    'this_month_approved' => $thisMonthApprovedShops,
+                    'this_month_pending' => $thisMonthPendingShops,
+                    'this_month_rejected' => $thisMonthRejectedShops
                 ],
                 'bank_transfers' => [
                     'total' => $totalBankTransfers,
@@ -804,6 +861,9 @@ class ShopController extends Controller
                     'rejected' => $rejectedBankTransfers,
                     'total_amount' => $totalBankTransferAmount,
                     'this_month' => $thisMonthBankTransfers,
+                    'this_month_approved' => $thisMonthApprovedBankTransfers,
+                    'this_month_pending' => $thisMonthPendingBankTransfers,
+                    'this_month_rejected' => $thisMonthRejectedBankTransfers,
                     'this_month_amount' => $thisMonthBankTransferAmount
                 ],
                 'reward_passes' => [
@@ -811,7 +871,10 @@ class ShopController extends Controller
                     'approved' => $approvedRewardPasses,
                     'pending' => $pendingRewardPasses,
                     'rejected' => $rejectedRewardPasses,
-                    'this_month' => $thisMonthRewardPasses
+                    'this_month' => $thisMonthRewardPasses,
+                    'this_month_approved' => $thisMonthApprovedRewardPasses,
+                    'this_month_pending' => $thisMonthPendingRewardPasses,
+                    'this_month_rejected' => $thisMonthRejectedRewardPasses
                 ],
                 'summary' => [
                     'total_activities' => $totalShops + $totalBankTransfers + $totalRewardPasses,
