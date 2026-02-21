@@ -575,11 +575,17 @@ class ShopController extends Controller
         $rejectedRewardPasses = $rewardPassStats->rejected ?? 0;
 
         // Monthly statistics (current month - optimized)
-        $thisMonthShops = Shop::where('agent_id', $agentId)
-            ->where('status', 'approved')
+        $thisMonthShopStats = Shop::where('agent_id', $agentId)
             ->whereMonth('created_at', $currentMonth->month)
             ->whereYear('created_at', $currentMonth->year)
-            ->count();
+            ->selectRaw('SUM(CASE WHEN status = "approved" THEN 1 ELSE 0 END) as approved')
+            ->selectRaw('SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pending')
+            ->selectRaw('SUM(CASE WHEN status = "rejected" THEN 1 ELSE 0 END) as rejected')
+            ->first();
+
+        $thisMonthApprovedShops = $thisMonthShopStats->approved ?? 0;
+        $thisMonthPendingShops  = $thisMonthShopStats->pending ?? 0;
+        $thisMonthRejectedShops = $thisMonthShopStats->rejected ?? 0;
 
         // Monthly bank transfer amounts (optimized single query)
         $thisMonthBankTransferStats = \App\Models\BankTransfer::where('agent_id', $agentId)
@@ -594,11 +600,17 @@ class ShopController extends Controller
         $thisMonthPendingBankTransferAmount = $thisMonthBankTransferStats->pending_amount ?? 0;
         $thisMonthRejectedBankTransferAmount = $thisMonthBankTransferStats->rejected_amount ?? 0;
 
-        $thisMonthRewardPasses = \App\Models\RewardPass::where('agent_id', $agentId)
-            ->where('status', 'approved')
+        $thisMonthRewardPassStats = \App\Models\RewardPass::where('agent_id', $agentId)
             ->whereMonth('created_at', $currentMonth->month)
             ->whereYear('created_at', $currentMonth->year)
-            ->count();
+            ->selectRaw('SUM(CASE WHEN status = "approved" THEN 1 ELSE 0 END) as approved')
+            ->selectRaw('SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pending')
+            ->selectRaw('SUM(CASE WHEN status = "rejected" THEN 1 ELSE 0 END) as rejected')
+            ->first();
+
+        $thisMonthApprovedRewardPasses = $thisMonthRewardPassStats->approved ?? 0;
+        $thisMonthPendingRewardPasses  = $thisMonthRewardPassStats->pending ?? 0;
+        $thisMonthRejectedRewardPasses = $thisMonthRewardPassStats->rejected ?? 0;
 
         return response()->json([
             'success' => true,
@@ -617,7 +629,9 @@ class ShopController extends Controller
                     'approved' => $approvedShops,
                     'pending' => $pendingShops,
                     'rejected' => $rejectedShops,
-                    'this_month' => $thisMonthShops
+                    'this_month_approved' => $thisMonthApprovedShops,
+                    'this_month_pending' => $thisMonthPendingShops,
+                    'this_month_rejected' => $thisMonthRejectedShops
                 ],
                 'bank_transfers' => [
                     'approved_amount' => $approvedBankTransferAmount,
@@ -632,7 +646,9 @@ class ShopController extends Controller
                     'approved' => $approvedRewardPasses,
                     'pending' => $pendingRewardPasses,
                     'rejected' => $rejectedRewardPasses,
-                    'this_month' => $thisMonthRewardPasses
+                    'this_month_approved' => $thisMonthApprovedRewardPasses,
+                    'this_month_pending' => $thisMonthPendingRewardPasses,
+                    'this_month_rejected' => $thisMonthRejectedRewardPasses
                 ],
                 'summary' => [
                     'total_activities' => $totalShops + $totalRewardPasses,
